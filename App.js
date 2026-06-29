@@ -1,7 +1,8 @@
 import 'react-native-url-polyfill/auto';
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -13,6 +14,7 @@ import ScanScreen       from './src/screens/ScanScreen';
 import CollectionScreen from './src/screens/CollectionScreen';
 import DashboardScreen  from './src/screens/DashboardScreen';
 import AuthScreen       from './src/screens/AuthScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 import { C }            from './src/constants/colors';
 import { AuthProvider, useAuth }         from './src/context/AuthContext';
 import { CollectionProvider }            from './src/context/CollectionContext';
@@ -70,16 +72,32 @@ function MainTabs() {
   );
 }
 
+const ONBOARDING_KEY = 'onboarding_complete_v1';
+
 function AppContent() {
   const { session, loading } = useAuth();
+  const [onboarded, setOnboarded] = useState(null); // null = still loading flag
 
-  if (loading) {
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDING_KEY)
+      .then(v => setOnboarded(v === 'true'))
+      .catch(() => setOnboarded(false));
+  }, []);
+
+  async function completeOnboarding() {
+    setOnboarded(true);
+    try { await AsyncStorage.setItem(ONBOARDING_KEY, 'true'); } catch (_) {}
+  }
+
+  if (loading || onboarded === null) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={C.accent} />
       </View>
     );
   }
+
+  if (!onboarded) return <OnboardingScreen onDone={completeOnboarding} />;
 
   if (!session) return <AuthScreen />;
 
