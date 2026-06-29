@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { useCollection } from '../context/CollectionContext';
-import { useAuth } from '../context/AuthContext';
 import { CATEGORIES } from '../data/items';
 import DonutChart from '../components/DonutChart';
 import PaywallScreen from './PaywallScreen';
+import SettingsScreen from './SettingsScreen';
 
 const GOLD = '#F5B301';
 
@@ -59,21 +59,10 @@ function TopRow({ coin, rank, maxValue }) {
 
 export default function DashboardScreen() {
   const { coins } = useCollection();
-  const { signOut } = useAuth();
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-  function confirmSignOut() {
-    Alert.alert(
-      'Sign out',
-      'Are you sure you want to sign out of Trovault?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
-      ],
-    );
-  }
 
   const filtered  = categoryFilter ? coins.filter(c => (c.category ?? 'Coins') === categoryFilter) : coins;
   const totalValue = filtered.reduce((s, c) => s + c.value, 0);
@@ -101,8 +90,8 @@ export default function DashboardScreen() {
             <Text style={ds.headerEyebrow}>OVERVIEW</Text>
             <Text style={ds.headerTitle}>Dashboard</Text>
           </View>
-          <TouchableOpacity style={ds.notifBtn} onPress={confirmSignOut} activeOpacity={0.8}>
-            <Ionicons name="log-out-outline" size={20} color={C.textSub} />
+          <TouchableOpacity style={ds.notifBtn} onPress={() => setShowSettings(true)} activeOpacity={0.8}>
+            <Ionicons name="settings-outline" size={20} color={C.textSub} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -261,6 +250,7 @@ export default function DashboardScreen() {
       </ScrollView>
 
       <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
+      <SettingsScreen visible={showSettings} onClose={() => setShowSettings(false)} />
     </View>
   );
 }

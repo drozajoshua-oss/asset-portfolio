@@ -134,6 +134,52 @@ app.post('/api/identify', async (req, res) => {
   }
 });
 
+// Permanently delete the calling user's account + their data.
+// Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars (set on Railway).
+// The service-role key is admin-level — it must ONLY ever live here on the server.
+app.post('/api/delete-account', async (req, res) => {
+  const SUPA_URL     = process.env.SUPABASE_URL;
+  const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPA_URL || !SERVICE_ROLE) {
+    return res.status(500).json({ error: 'Account deletion is not configured on the server yet.' });
+  }
+
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'Missing access token.' });
+
+  try {
+    // 1) Resolve the user from their own access token.
+    const userRes = await fetch(`${SUPA_URL}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: SERVICE_ROLE },
+    });
+    const user = await userRes.json();
+    if (!userRes.ok || !user?.id) {
+      return res.status(401).json({ error: 'Invalid or expired session.' });
+    }
+
+    // 2) Best-effort delete of their collection rows (privacy / GDPR).
+    await fetch(`${SUPA_URL}/rest/v1/assets?user_id=eq.${user.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
+    }).catch(() => {});
+
+    // 3) Delete the auth user (admin).
+    const delRes = await fetch(`${SUPA_URL}/auth/v1/admin/users/${user.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
+    });
+    if (!delRes.ok) {
+      const e = await delRes.json().catch(() => ({}));
+      return res.status(delRes.status).json({ error: e.msg || 'Failed to delete account.' });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT ?? 3001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Gemini proxy listening on http://0.0.0.0:${PORT}`);
