@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
@@ -7,6 +7,9 @@ import { useCollection } from '../context/CollectionContext';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES } from '../data/items';
 import DonutChart from '../components/DonutChart';
+import PaywallScreen from './PaywallScreen';
+
+const GOLD = '#F5B301';
 
 // Small metric card used in the stats row
 function StatCard({ icon, iconBg, iconColor, label, value, sub, subColor }) {
@@ -58,7 +61,19 @@ export default function DashboardScreen() {
   const { coins } = useCollection();
   const { signOut } = useAuth();
   const [categoryFilter, setCategoryFilter] = useState(null);
+  const [showPaywall, setShowPaywall] = useState(false);
   const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  function confirmSignOut() {
+    Alert.alert(
+      'Sign out',
+      'Are you sure you want to sign out of Trovault?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+      ],
+    );
+  }
 
   const filtered  = categoryFilter ? coins.filter(c => (c.category ?? 'Coins') === categoryFilter) : coins;
   const totalValue = filtered.reduce((s, c) => s + c.value, 0);
@@ -86,7 +101,7 @@ export default function DashboardScreen() {
             <Text style={ds.headerEyebrow}>OVERVIEW</Text>
             <Text style={ds.headerTitle}>Dashboard</Text>
           </View>
-          <TouchableOpacity style={ds.notifBtn} onPress={signOut} activeOpacity={0.8}>
+          <TouchableOpacity style={ds.notifBtn} onPress={confirmSignOut} activeOpacity={0.8}>
             <Ionicons name="log-out-outline" size={20} color={C.textSub} />
           </TouchableOpacity>
         </View>
@@ -129,6 +144,22 @@ export default function DashboardScreen() {
             </View>
           </View>
         </View>
+
+        {/* ── Go Premium banner ── */}
+        <TouchableOpacity
+          style={[ds.premiumBanner, CARD_SHADOW]}
+          onPress={() => setShowPaywall(true)}
+          activeOpacity={0.9}
+        >
+          <View style={ds.premiumIcon}>
+            <Ionicons name="diamond" size={20} color={GOLD} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={ds.premiumTitle}>Go Premium</Text>
+            <Text style={ds.premiumSub}>Unlimited scans, live values & analytics</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.textMuted} />
+        </TouchableOpacity>
 
         {/* ── Category filter chips ── */}
         <ScrollView
@@ -228,6 +259,8 @@ export default function DashboardScreen() {
         </View>
 
       </ScrollView>
+
+      <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
 }
@@ -291,6 +324,21 @@ const ds = StyleSheet.create({
   heroStatDiv: { width: 1, backgroundColor: 'rgba(255,255,255,0.20)', marginVertical: 2 },
   heroStatNum: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
   heroStatLbl: { fontSize: 10, color: 'rgba(255,255,255,0.65)', marginTop: 3, letterSpacing: 0.3 },
+
+  // Go Premium banner
+  premiumBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: C.surface, borderRadius: 14,
+    borderWidth: 1, borderColor: GOLD + '55',
+    paddingHorizontal: 14, paddingVertical: 13, marginBottom: 14,
+  },
+  premiumIcon: {
+    width: 38, height: 38, borderRadius: 11,
+    backgroundColor: '#FFF8E6', borderWidth: 1, borderColor: GOLD + '40',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  premiumTitle: { fontSize: 14, fontWeight: '800', color: C.text },
+  premiumSub:   { fontSize: 11.5, color: C.textSub, marginTop: 2 },
 
   // Stats row
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
