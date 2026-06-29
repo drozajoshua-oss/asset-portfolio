@@ -88,6 +88,8 @@ Rules for ALL collectibles:
     Sneakers/Wine/Art/Vintage Cars → Silver
 - If you cannot identify the item confidently, set name to "Unknown Collectible", category to the best guess, and both values to 0`;
 
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
 app.post('/api/identify', async (req, res) => {
   if (!API_KEY) {
     return res.status(500).json({ error: 'GEMINI_API_KEY is not set on the server.' });
