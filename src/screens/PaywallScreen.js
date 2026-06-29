@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Modal, Alert,
+  Modal, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
+import { usePremium } from '../context/PremiumContext';
 
 const GOLD = '#F5B301';
 
@@ -39,19 +40,39 @@ const PLANS = [
 
 export default function PaywallScreen({ visible, onClose }) {
   const [selected, setSelected] = useState('annual');
+  const [busy, setBusy] = useState(false);
+  const { purchase, restore } = usePremium();
 
-  function handlePurchase() {
-    // TODO: wire RevenueCat — Purchases.purchasePackage(selectedPackage)
-    Alert.alert(
-      'Almost there',
-      'In-app purchases will be enabled once billing is connected. Your selection has been noted.',
-      [{ text: 'OK' }],
-    );
+  async function handlePurchase() {
+    setBusy(true);
+    const res = await purchase(selected);
+    setBusy(false);
+
+    if (res?.ok) {
+      Alert.alert('Welcome to Premium', 'Your vault is now fully unlocked.', [
+        { text: 'Great', onPress: onClose },
+      ]);
+    } else if (res?.reason === 'not_configured') {
+      Alert.alert('Almost there', 'In-app purchases will be enabled once billing is connected.', [{ text: 'OK' }]);
+    } else if (res?.reason === 'cancelled') {
+      // user backed out — no message needed
+    } else {
+      Alert.alert('Purchase failed', res?.message || 'Something went wrong. Please try again.', [{ text: 'OK' }]);
+    }
   }
 
-  function handleRestore() {
-    // TODO: wire RevenueCat — Purchases.restorePurchases()
-    Alert.alert('Restore purchases', 'No previous purchases were found on this account.', [{ text: 'OK' }]);
+  async function handleRestore() {
+    setBusy(true);
+    const res = await restore();
+    setBusy(false);
+
+    if (res?.ok) {
+      Alert.alert('Purchases restored', 'Your premium access is active again.', [{ text: 'Great', onPress: onClose }]);
+    } else if (res?.reason === 'not_configured') {
+      Alert.alert('Restore purchases', 'Purchases will be available once billing is connected.', [{ text: 'OK' }]);
+    } else {
+      Alert.alert('Restore purchases', 'No previous purchases were found on this account.', [{ text: 'OK' }]);
+    }
   }
 
   const plan = PLANS.find(p => p.id === selected);
@@ -127,13 +148,20 @@ export default function PaywallScreen({ visible, onClose }) {
 
           {/* CTA */}
           <View style={pw.footer}>
-            <TouchableOpacity style={pw.cta} onPress={handlePurchase} activeOpacity={0.85}>
-              <Text style={pw.ctaText}>Start 7-day free trial</Text>
+            <TouchableOpacity
+              style={[pw.cta, busy && pw.ctaDisabled]}
+              onPress={handlePurchase}
+              disabled={busy}
+              activeOpacity={0.85}
+            >
+              {busy
+                ? <ActivityIndicator color="#FFF" />
+                : <Text style={pw.ctaText}>Start 7-day free trial</Text>}
             </TouchableOpacity>
             <Text style={pw.ctaSub}>
               Then {plan.price}{plan.per} · Cancel anytime
             </Text>
-            <TouchableOpacity onPress={handleRestore} hitSlop={8} activeOpacity={0.7}>
+            <TouchableOpacity onPress={handleRestore} disabled={busy} hitSlop={8} activeOpacity={0.7}>
               <Text style={pw.restore}>Restore purchases</Text>
             </TouchableOpacity>
           </View>
@@ -211,6 +239,7 @@ const pw = StyleSheet.create({
     backgroundColor: C.accent, borderRadius: 14,
     paddingVertical: 16, alignItems: 'center',
   },
+  ctaDisabled: { opacity: 0.7 },
   ctaText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
   ctaSub: { fontSize: 12, color: C.textMuted, textAlign: 'center', marginTop: 10 },
   restore: { fontSize: 13, fontWeight: '700', color: C.accent, textAlign: 'center', marginTop: 12 },

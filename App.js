@@ -18,6 +18,7 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import { C }            from './src/constants/colors';
 import { AuthProvider, useAuth }         from './src/context/AuthContext';
 import { CollectionProvider }            from './src/context/CollectionContext';
+import { PremiumProvider }               from './src/context/PremiumContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -107,12 +108,14 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <CollectionProvider>
-        <SafeAreaProvider>
-          <StatusBar style="dark" />
-          <AppContent />
-        </SafeAreaProvider>
-      </CollectionProvider>
+      <PremiumProvider>
+        <CollectionProvider>
+          <SafeAreaProvider>
+            <StatusBar style="dark" />
+            <AppContent />
+          </SafeAreaProvider>
+        </CollectionProvider>
+      </PremiumProvider>
     </AuthProvider>
   );
 }
