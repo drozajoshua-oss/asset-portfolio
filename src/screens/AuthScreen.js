@@ -8,19 +8,31 @@ import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { supabase } from '../services/supabase';
 
+const MIN_PASSWORD = 6;
+
 export default function AuthScreen() {
-  const [mode, setMode] = useState('login');
+  const [screen, setScreen] = useState('auth');   // 'auth' | 'reset'
+  const [mode, setMode] = useState('login');       // 'login' | 'signup'
+  const [resetStep, setResetStep] = useState('request'); // 'request' | 'verify'
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', isError: false });
 
+  function clearMessage() { setMessage({ text: '', isError: false }); }
+  function err(text) { setMessage({ text, isError: true }); }
+  function info(text) { setMessage({ text, isError: false }); }
+
   async function handleSubmit() {
     if (!email.trim() || !password.trim()) {
-      setMessage({ text: 'Please enter your email and password.', isError: true });
+      err('Please enter your email and password.');
       return;
     }
-    setMessage({ text: '', isError: false });
+    clearMessage();
     setLoading(true);
 
     const { error } =
@@ -30,38 +42,92 @@ export default function AuthScreen() {
 
     setLoading(false);
     if (error) {
-      setMessage({ text: error.message, isError: true });
+      err(error.message);
     } else if (mode === 'signup') {
-      setMessage({ text: 'Check your email to confirm your account before signing in.', isError: false });
+      info('Check your email to confirm your account before signing in.');
     }
     // On successful login, AuthContext updates the session and App re-renders automatically.
   }
 
-  async function handleForgotPassword() {
+  function switchMode(next) {
+    setMode(next);
+    clearMessage();
+  }
+
+  // ── Password reset (email code) ────────────────────────────
+  function openReset() {
+    setScreen('reset');
+    setResetStep('request');
+    setCode('');
+    setNewPassword('');
+    clearMessage();
+  }
+
+  function backToAuth() {
+    setScreen('auth');
+    setResetStep('request');
+    setCode('');
+    setNewPassword('');
+    clearMessage();
+  }
+
+  async function sendResetCode() {
     if (!email.trim()) {
-      setMessage({ text: 'Enter your email address above, then tap "Forgot password?" to get a reset link.', isError: true });
+      err('Enter your email address so we can send you a reset code.');
       return;
     }
-    setMessage({ text: '', isError: false });
+    clearMessage();
     setLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
 
     setLoading(false);
     if (error) {
-      setMessage({ text: error.message, isError: true });
+      err(error.message);
     } else {
-      setMessage({
-        text: 'If an account exists for that email, a password reset link is on its way. Check your inbox.',
-        isError: false,
-      });
+      setResetStep('verify');
+      info(`We sent a 6-digit code to ${email.trim()}. Enter it below with your new password.`);
     }
   }
 
-  function switchMode(next) {
-    setMode(next);
-    setMessage({ text: '', isError: false });
+  async function verifyResetCode() {
+    if (code.trim().length < 6) {
+      err('Enter the 6-digit code from your email.');
+      return;
+    }
+    if (newPassword.length < MIN_PASSWORD) {
+      err(`New password must be at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
+    clearMessage();
+    setLoading(true);
+
+    // 1) Verify the code — this signs the user in via a recovery session.
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: code.trim(),
+      type: 'recovery',
+    });
+
+    if (verifyError) {
+      setLoading(false);
+      err('That code is invalid or expired. Request a new one.');
+      return;
+    }
+
+    // 2) Set the new password on the now-authenticated session.
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+
+    setLoading(false);
+    if (updateError) {
+      err(updateError.message);
+    } else {
+      info('Password updated — you are now signed in.');
+      // AuthContext picks up the session and navigates to the app automatically.
+    }
   }
+
+  const isReset = screen === 'reset';
 
   return (
     <SafeAreaView style={au.root} edges={['top', 'bottom']}>
@@ -80,89 +146,190 @@ export default function AuthScreen() {
 
         {/* Card */}
         <View style={au.card}>
-          {/* Mode toggle */}
-          <View style={au.tabs}>
-            <TouchableOpacity
-              style={[au.tab, mode === 'login' && au.tabActive]}
-              onPress={() => switchMode('login')}
-              activeOpacity={0.8}
-            >
-              <Text style={[au.tabText, mode === 'login' && au.tabTextActive]}>Sign In</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[au.tab, mode === 'signup' && au.tabActive]}
-              onPress={() => switchMode('signup')}
-              activeOpacity={0.8}
-            >
-              <Text style={[au.tabText, mode === 'signup' && au.tabTextActive]}>Create Account</Text>
-            </TouchableOpacity>
-          </View>
+          {!isReset ? (
+            <>
+              {/* Mode toggle */}
+              <View style={au.tabs}>
+                <TouchableOpacity
+                  style={[au.tab, mode === 'login' && au.tabActive]}
+                  onPress={() => switchMode('login')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[au.tabText, mode === 'login' && au.tabTextActive]}>Sign In</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[au.tab, mode === 'signup' && au.tabActive]}
+                  onPress={() => switchMode('signup')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[au.tabText, mode === 'signup' && au.tabTextActive]}>Create Account</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Inputs */}
-          <View style={au.fields}>
-            <View style={au.fieldWrap}>
-              <Ionicons name="mail-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
-              <TextInput
-                style={au.input}
-                placeholder="Email address"
-                placeholderTextColor={C.textMuted}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                returnKeyType="next"
-              />
-            </View>
-            <View style={au.fieldWrap}>
-              <Ionicons name="lock-closed-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
-              <TextInput
-                style={au.input}
-                placeholder="Password"
-                placeholderTextColor={C.textMuted}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit}
-              />
-            </View>
-          </View>
+              {/* Inputs */}
+              <View style={au.fields}>
+                <View style={au.fieldWrap}>
+                  <Ionicons name="mail-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
+                  <TextInput
+                    style={au.input}
+                    placeholder="Email address"
+                    placeholderTextColor={C.textMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="next"
+                  />
+                </View>
+                <View style={au.fieldWrap}>
+                  <Ionicons name="lock-closed-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
+                  <TextInput
+                    style={au.input}
+                    placeholder="Password"
+                    placeholderTextColor={C.textMuted}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    returnKeyType="done"
+                    onSubmitEditing={handleSubmit}
+                  />
+                </View>
+              </View>
 
-          {/* Forgot password — login mode only */}
-          {mode === 'login' && (
-            <TouchableOpacity
-              style={au.forgotWrap}
-              onPress={handleForgotPassword}
-              disabled={loading}
-              activeOpacity={0.7}
-              hitSlop={8}
-            >
-              <Text style={au.forgotText}>Forgot password?</Text>
-            </TouchableOpacity>
-          )}
+              {/* Forgot password — login mode only */}
+              {mode === 'login' && (
+                <TouchableOpacity
+                  style={au.forgotWrap}
+                  onPress={openReset}
+                  disabled={loading}
+                  activeOpacity={0.7}
+                  hitSlop={8}
+                >
+                  <Text style={au.forgotText}>Forgot password?</Text>
+                </TouchableOpacity>
+              )}
 
-          {/* Feedback */}
-          {message.text ? (
-            <View style={[au.msgBox, message.isError ? au.msgError : au.msgInfo]}>
-              <Text style={[au.msgText, message.isError ? au.msgTextError : au.msgTextInfo]}>
-                {message.text}
+              {message.text ? (
+                <View style={[au.msgBox, message.isError ? au.msgError : au.msgInfo]}>
+                  <Text style={[au.msgText, message.isError ? au.msgTextError : au.msgTextInfo]}>
+                    {message.text}
+                  </Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[au.btn, loading && au.btnDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading
+                  ? <ActivityIndicator color="#FFF" />
+                  : <Text style={au.btnText}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>
+                }
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {/* Reset header */}
+              <View style={au.resetHeader}>
+                <TouchableOpacity onPress={backToAuth} hitSlop={10} activeOpacity={0.7} style={au.backBtn}>
+                  <Ionicons name="chevron-back" size={20} color={C.textSub} />
+                </TouchableOpacity>
+                <Text style={au.resetTitle}>Reset password</Text>
+                <View style={au.backBtn} />
+              </View>
+
+              <Text style={au.resetSub}>
+                {resetStep === 'request'
+                  ? "Enter your email and we'll send you a 6-digit reset code."
+                  : 'Enter the code from your email and choose a new password.'}
               </Text>
-            </View>
-          ) : null}
 
-          {/* Submit */}
-          <TouchableOpacity
-            style={[au.btn, loading && au.btnDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-            activeOpacity={0.85}
-          >
-            {loading
-              ? <ActivityIndicator color="#FFF" />
-              : <Text style={au.btnText}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>
-            }
-          </TouchableOpacity>
+              <View style={au.fields}>
+                {/* Email — always shown, editable only on request step */}
+                <View style={au.fieldWrap}>
+                  <Ionicons name="mail-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
+                  <TextInput
+                    style={au.input}
+                    placeholder="Email address"
+                    placeholderTextColor={C.textMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                    editable={resetStep === 'request'}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="done"
+                  />
+                </View>
+
+                {resetStep === 'verify' && (
+                  <>
+                    <View style={au.fieldWrap}>
+                      <Ionicons name="keypad-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
+                      <TextInput
+                        style={[au.input, au.codeInput]}
+                        placeholder="6-digit code"
+                        placeholderTextColor={C.textMuted}
+                        value={code}
+                        onChangeText={t => setCode(t.replace(/[^0-9]/g, '').slice(0, 6))}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        returnKeyType="next"
+                      />
+                    </View>
+                    <View style={au.fieldWrap}>
+                      <Ionicons name="lock-closed-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
+                      <TextInput
+                        style={au.input}
+                        placeholder="New password"
+                        placeholderTextColor={C.textMuted}
+                        value={newPassword}
+                        onChangeText={setNewPassword}
+                        secureTextEntry
+                        returnKeyType="done"
+                        onSubmitEditing={verifyResetCode}
+                      />
+                    </View>
+                  </>
+                )}
+              </View>
+
+              {message.text ? (
+                <View style={[au.msgBox, message.isError ? au.msgError : au.msgInfo]}>
+                  <Text style={[au.msgText, message.isError ? au.msgTextError : au.msgTextInfo]}>
+                    {message.text}
+                  </Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[au.btn, loading && au.btnDisabled]}
+                onPress={resetStep === 'request' ? sendResetCode : verifyResetCode}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading
+                  ? <ActivityIndicator color="#FFF" />
+                  : <Text style={au.btnText}>{resetStep === 'request' ? 'Send code' : 'Reset password'}</Text>
+                }
+              </TouchableOpacity>
+
+              {resetStep === 'verify' && (
+                <TouchableOpacity
+                  style={au.resendWrap}
+                  onPress={sendResetCode}
+                  disabled={loading}
+                  activeOpacity={0.7}
+                  hitSlop={8}
+                >
+                  <Text style={au.resendText}>Resend code</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -213,10 +380,22 @@ const au = StyleSheet.create({
   },
   fieldIcon: { marginRight: 10 },
   input:     { flex: 1, fontSize: 15, color: C.text },
+  codeInput: { letterSpacing: 6, fontWeight: '700' },
 
   // Forgot password
   forgotWrap: { alignSelf: 'flex-end', marginTop: -4, marginBottom: 14 },
   forgotText: { fontSize: 13, fontWeight: '700', color: C.accent },
+
+  // Reset header
+  resetHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  backBtn:    { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  resetTitle: { fontSize: 16, fontWeight: '800', color: C.text },
+  resetSub:   { fontSize: 13, lineHeight: 19, color: C.textSub, marginBottom: 20 },
+  resendWrap: { alignSelf: 'center', marginTop: 16 },
+  resendText: { fontSize: 13, fontWeight: '700', color: C.accent },
 
   // Feedback
   msgBox:      { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12 },
