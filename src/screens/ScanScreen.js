@@ -9,6 +9,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { identifyAsset } from '../services/gemini';
 import { useCollection } from '../context/CollectionContext';
+import { usePremium } from '../context/PremiumContext';
+import PaywallScreen from './PaywallScreen';
 
 const { width: W, height: H } = Dimensions.get('window');
 // Larger circle so tall items (cards, stamps) clip less at the edges.
@@ -59,6 +61,8 @@ function Corner({ pos }) {
 
 export default function ScanScreen() {
   const { addCoin } = useCollection();
+  const { isPremium, canScan, scansRemaining, recordScan } = usePremium();
+  const [showPaywall, setShowPaywall] = useState(false);
   // idle | reviewing | scanning | done | error
   const [state, setState] = useState('idle');
   const [photos, setPhotos] = useState([]);       // [{uri, base64}]
@@ -96,6 +100,7 @@ export default function ScanScreen() {
     setScanResult(null);
     setErrorMsg('');
     setState('scanning');
+    recordScan(); // count this identification against the daily free quota
     try {
       const result = await identifyAsset(photoList.map(p => p.base64));
       setScanResult(result);
@@ -124,6 +129,7 @@ export default function ScanScreen() {
   // First-photo capture (only from idle). Leads directly to the review screen.
   const handleCamera = async () => {
     if (state !== 'idle') return;
+    if (!canScan) { setShowPaywall(true); return; }
     const asset = await launchCamera();
     if (!asset) return;
     setPhotos([{ uri: asset.uri, base64: asset.base64 }]);
@@ -134,6 +140,7 @@ export default function ScanScreen() {
   // Gallery pick (only from idle). Same destination as handleCamera.
   const handleGallery = async () => {
     if (state !== 'idle') return;
+    if (!canScan) { setShowPaywall(true); return; }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission required', 'Photo library access is needed to pick an image.');
@@ -341,6 +348,26 @@ export default function ScanScreen() {
           </View>
         )}
 
+        {/* Free-scan meter — idle only */}
+        {state === 'idle' && (
+          <View style={sc.scanMeter}>
+            {isPremium ? (
+              <View style={sc.scanMeterRow}>
+                <Ionicons name="diamond" size={12} color={C.accent} />
+                <Text style={sc.scanMeterPremium}>Premium · Unlimited scans</Text>
+              </View>
+            ) : scansRemaining > 0 ? (
+              <Text style={sc.scanMeterText}>
+                {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left today
+              </Text>
+            ) : (
+              <TouchableOpacity onPress={() => setShowPaywall(true)} activeOpacity={0.7} hitSlop={8}>
+                <Text style={sc.scanMeterUpgrade}>You're out of free scans — Go Premium →</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {/* Error state */}
         {state === 'error' && (
           <View style={sc.errorWrap}>
@@ -430,6 +457,8 @@ export default function ScanScreen() {
           </Animated.View>
         )}
       </View>}
+
+      <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
 }
@@ -565,6 +594,13 @@ const sc = StyleSheet.create({
     backgroundColor: C.accent,
   },
   btnIdentifyNowText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
+
+  // Free-scan meter
+  scanMeter: { alignItems: 'center', paddingBottom: 18, marginTop: -10 },
+  scanMeterRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  scanMeterText:    { fontSize: 12, color: C.textMuted, fontWeight: '600' },
+  scanMeterPremium: { fontSize: 12, color: C.accent, fontWeight: '700' },
+  scanMeterUpgrade: { fontSize: 12.5, color: C.accent, fontWeight: '700' },
 
   errorWrap: {
     alignItems: 'center', justifyContent: 'center',
