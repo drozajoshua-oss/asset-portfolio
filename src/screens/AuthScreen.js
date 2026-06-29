@@ -37,6 +37,27 @@ export default function AuthScreen() {
     // On successful login, AuthContext updates the session and App re-renders automatically.
   }
 
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      setMessage({ text: 'Enter your email address above, then tap "Forgot password?" to get a reset link.', isError: true });
+      return;
+    }
+    setMessage({ text: '', isError: false });
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+
+    setLoading(false);
+    if (error) {
+      setMessage({ text: error.message, isError: true });
+    } else {
+      setMessage({
+        text: 'If an account exists for that email, a password reset link is on its way. Check your inbox.',
+        isError: false,
+      });
+    }
+  }
+
   function switchMode(next) {
     setMode(next);
     setMessage({ text: '', isError: false });
@@ -107,6 +128,19 @@ export default function AuthScreen() {
               />
             </View>
           </View>
+
+          {/* Forgot password — login mode only */}
+          {mode === 'login' && (
+            <TouchableOpacity
+              style={au.forgotWrap}
+              onPress={handleForgotPassword}
+              disabled={loading}
+              activeOpacity={0.7}
+              hitSlop={8}
+            >
+              <Text style={au.forgotText}>Forgot password?</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Feedback */}
           {message.text ? (
@@ -179,6 +213,10 @@ const au = StyleSheet.create({
   },
   fieldIcon: { marginRight: 10 },
   input:     { flex: 1, fontSize: 15, color: C.text },
+
+  // Forgot password
+  forgotWrap: { alignSelf: 'flex-end', marginTop: -4, marginBottom: 14 },
+  forgotText: { fontSize: 13, fontWeight: '700', color: C.accent },
 
   // Feedback
   msgBox:      { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12 },
