@@ -1,8 +1,8 @@
-# Privacy Policy — Your Asset Portfolio
+# Privacy Policy — Trovault
 
 _Last updated: June 29, 2026_
 
-This Privacy Policy explains how **Your Asset Portfolio** ("the App", "we", "us") handles information when you use the App to scan, identify, and organize collectible items such as coins, sports cards, watches, art, and other valuables. We have built the App to collect as little personal data as possible.
+This Privacy Policy explains how **Trovault** ("the App", "we", "us") handles information when you use the App to scan, identify, and organize collectible items such as coins, sports cards, watches, art, and other valuables. We have built the App to collect as little personal data as possible.
 
 ## Information We Collect
 
@@ -60,4 +60,4 @@ We may update this Privacy Policy from time to time. When we do, we will revise 
 
 If you have any questions about this Privacy Policy or your data, contact us at: **joshuadroza777@gmail.com**
 
-© 2026 Your Asset Portfolio. All rights reserved.
+© 2026 Trovault. All rights reserved.

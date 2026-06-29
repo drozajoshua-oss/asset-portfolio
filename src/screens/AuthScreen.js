@@ -53,8 +53,8 @@ export default function AuthScreen() {
           <View style={au.logoRing}>
             <Ionicons name="diamond-outline" size={32} color={C.accent} />
           </View>
-          <Text style={au.appName}>YOUR ASSET PORTFOLIO</Text>
-          <Text style={au.tagline}>Track what matters</Text>
+          <Text style={au.appName}>TROVAULT</Text>
+          <Text style={au.tagline}>Your collection, secured</Text>
         </View>
 
         {/* Card */}

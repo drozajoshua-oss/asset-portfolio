@@ -210,7 +210,7 @@ export default function ScanScreen() {
         </View>
 
         <SafeAreaView edges={['top']} style={sc.header}>
-          <Text style={sc.appName}>YOUR ASSET PORTFOLIO</Text>
+          <Text style={sc.appName}>TROVAULT</Text>
         </SafeAreaView>
 
         {/* ── Review image — fills full cameraArea with overlay controls ── */}
