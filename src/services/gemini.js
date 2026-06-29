@@ -1,13 +1,4 @@
-import Constants from 'expo-constants';
-
-// In dev on a physical device, hostUri is "192.168.x.x:8081" — use that host
-// for the proxy so the device can reach the server over Wi-Fi.
-function getProxyBase() {
-  const hostUri = Constants.expoConfig?.hostUri ?? '';
-  const host = hostUri.split(':')[0];
-  if (host && host !== 'localhost') return `http://${host}:3001`;
-  return 'http://localhost:3001';
-}
+const PROXY_BASE = 'https://asset-portfolio-production.up.railway.app';
 
 const VALID_RARITIES = new Set(['common', 'uncommon', 'rare', 'legendary']);
 const VALID_METALS   = new Set(['Gold', 'Silver', 'Copper', 'Bronze']);
@@ -16,7 +7,7 @@ const VALID_METALS   = new Set(['Gold', 'Silver', 'Copper', 'Bronze']);
 // so it can cross-reference details across angles for a more accurate identification.
 export async function identifyAsset(base64Images) {
   const images = Array.isArray(base64Images) ? base64Images : [base64Images];
-  const url = `${getProxyBase()}/api/identify`;
+  const url = `${PROXY_BASE}/api/identify`;
 
   const response = await fetch(url, {
     method: 'POST',
