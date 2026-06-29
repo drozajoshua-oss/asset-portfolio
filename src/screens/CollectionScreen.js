@@ -133,7 +133,7 @@ export default function CollectionScreen() {
           <View style={col.headerStats}>
             <View style={col.statPill}>
               <Ionicons name="layers-outline" size={13} color={C.accent} />
-              <Text style={col.statPillText}>{allCoins.length} coins</Text>
+              <Text style={col.statPillText}>{allCoins.length} {allCoins.length === 1 ? 'item' : 'items'}</Text>
             </View>
             <View style={[col.statPill, col.statPillGold]}>
               <Text style={col.statPillGoldText}>${allCoins.reduce((s, c) => s + c.value, 0).toLocaleString()}</Text>
@@ -187,7 +187,7 @@ export default function CollectionScreen() {
             <View style={col.emptyIcon}>
               <Ionicons name="albums-outline" size={32} color={C.textMuted} />
             </View>
-            <Text style={col.emptyTitle}>No coins found</Text>
+            <Text style={col.emptyTitle}>No items found</Text>
             <Text style={col.emptyText}>Try a different filter</Text>
           </View>
         )}
