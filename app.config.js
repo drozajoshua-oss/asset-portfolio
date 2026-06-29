@@ -1,0 +1,31 @@
+module.exports = {
+  expo: {
+    name: 'The Coin Collector',
+    slug: 'coin-collector',
+    version: '1.0.0',
+    orientation: 'portrait',
+    userInterfaceStyle: 'dark',
+    platforms: ['ios', 'android', 'web'],
+    splash: {
+      backgroundColor: '#080810',
+    },
+    ios: {
+      supportsTablet: false,
+    },
+    android: {
+      adaptiveIcon: {
+        backgroundColor: '#080810',
+      },
+    },
+    plugins: [
+      'expo-asset',
+      [
+        'expo-image-picker',
+        {
+          photosPermission: 'The Coin Collector needs access to your photos to scan coins.',
+          cameraPermission: 'The Coin Collector needs camera access to photograph coins.',
+        },
+      ],
+    ],
+  },
+};
