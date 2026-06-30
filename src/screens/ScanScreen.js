@@ -429,6 +429,20 @@ export default function ScanScreen() {
                     </View>
                   </View>
 
+                  {scanResult.marketComps?.count >= 3 && (
+                    <View style={sc.compsRow}>
+                      <Ionicons name="pricetags-outline" size={15} color={C.success} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={sc.compsTitle}>
+                          eBay market: ${scanResult.marketComps.low.toLocaleString()} – ${scanResult.marketComps.high.toLocaleString()}
+                        </Text>
+                        <Text style={sc.compsMeta}>
+                          Median ${scanResult.marketComps.median.toLocaleString()} · {scanResult.marketComps.count} live listings
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
                   <View style={sc.actions}>
                     <TouchableOpacity
                       style={[sc.btnPrimary, added && { opacity: 0.55 }]}
@@ -644,6 +658,14 @@ const sc = StyleSheet.create({
   },
   detailVal:       { fontSize: 14, color: C.text, fontWeight: '600' },
   detailValAccent: { fontSize: 15, color: C.accent, fontWeight: '800', letterSpacing: -0.3 },
+
+  compsRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: C.successLight, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 10, marginBottom: 14,
+  },
+  compsTitle: { fontSize: 13, fontWeight: '800', color: '#047857' },
+  compsMeta:  { fontSize: 11, color: '#059669', marginTop: 1 },
 
   actions: { flexDirection: 'row', gap: 10 },
   btnPrimary: {

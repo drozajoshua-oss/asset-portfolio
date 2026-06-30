@@ -1,6 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
+const ebay = require('./ebay');
 
 const app = express();
 app.use(cors());
@@ -177,6 +178,22 @@ app.post('/api/delete-account', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Real marketplace pricing for an identified item (active eBay listings).
+// Requires EBAY_CLIENT_ID + EBAY_CLIENT_SECRET (Production keyset) env vars.
+app.get('/api/price', async (req, res) => {
+  const q = req.query.q;
+  if (!q) return res.status(400).json({ error: 'q (item name) is required.' });
+  if (!ebay.isConfigured()) {
+    return res.status(503).json({ error: 'eBay pricing is not configured on the server yet.' });
+  }
+  try {
+    const comps = await ebay.getComps(q, req.query.marketplace || 'EBAY_US');
+    res.json({ comps });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
   }
 });
 

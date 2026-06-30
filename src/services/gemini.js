@@ -39,5 +39,22 @@ export async function identifyAsset(base64Images) {
   if (!data.symbolChar) data.symbolChar = '?';
   if (!VALID_METALS.has(data.metal)) data.metal = 'Silver';
 
+  // Best-effort: enrich with real eBay marketplace pricing. Never blocks the result.
+  data.marketComps = await fetchMarketPrice(data.name);
+
   return data;
+}
+
+// Fetches real active-listing price stats from eBay (via the server proxy).
+// Returns { low, median, high, count, currency } or null.
+async function fetchMarketPrice(query) {
+  if (!query) return null;
+  try {
+    const res = await fetch(`${PROXY_BASE}/api/price?q=${encodeURIComponent(query)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.comps && json.comps.count >= 3 ? json.comps : null;
+  } catch (_) {
+    return null;
+  }
 }
