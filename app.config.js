@@ -2,7 +2,13 @@ module.exports = {
   expo: {
     name: 'Trovault',
     slug: 'trovault',
+    owner: 'jd379',
     version: '1.0.0',
+    extra: {
+      eas: {
+        projectId: '27553097-c177-4015-9883-b42204259c71',
+      },
+    },
     orientation: 'portrait',
     userInterfaceStyle: 'dark',
     platforms: ['ios', 'android', 'web'],
