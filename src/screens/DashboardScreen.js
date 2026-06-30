@@ -65,7 +65,7 @@ export default function DashboardScreen() {
 
   // Category chips reflect only the categories actually in the collection (incl. custom).
   const dashCategories = [...new Set(coins.map(c => c.category).filter(Boolean))];
-  const filtered  = categoryFilter ? coins.filter(c => (c.category ?? 'Coins') === categoryFilter) : coins;
+  const filtered  = categoryFilter ? coins.filter(c => (c.category ?? 'Other') === categoryFilter) : coins;
   const totalValue = filtered.reduce((s, c) => s + c.value, 0);
   const countries  = [...new Set(filtered.map(c => c.country))].length;
   const avgValue   = filtered.length > 0 ? Math.round(totalValue / filtered.length) : 0;

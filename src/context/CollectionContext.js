@@ -8,7 +8,7 @@ function mapRowToCoin(row) {
   return {
     id: row.id,
     name: row.name,
-    category: row.category ?? 'Coins',
+    category: row.category ?? 'Other',
     country: row.country ?? '',
     year: row.year ?? 0,
     value: row.manual_value != null
@@ -51,7 +51,7 @@ export function CollectionProvider({ children }) {
     const row = {
       user_id:              session.user.id,
       name:                 scanResult.name,
-      category:             scanResult.category ?? 'Coins',
+      category:             scanResult.category ?? 'Other',
       country:              scanResult.country,
       year:                 scanResult.year,
       estimated_value_low:  scanResult.minValue,
@@ -82,8 +82,14 @@ export function CollectionProvider({ children }) {
     if (!error) setCoins(prev => prev.map(c => c.id === id ? { ...c, value: newValue } : c));
   }
 
+  async function deleteCoin(id) {
+    const { error } = await supabase.from('assets').delete().eq('id', id);
+    if (!error) setCoins(prev => prev.filter(c => c.id !== id));
+    return { error };
+  }
+
   return (
-    <CollectionContext.Provider value={{ coins, loading, addCoin, updateCoinValue }}>
+    <CollectionContext.Provider value={{ coins, loading, addCoin, updateCoinValue, deleteCoin }}>
       {children}
     </CollectionContext.Provider>
   );

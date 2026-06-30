@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions,
-  Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
+  Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,7 +73,7 @@ function CoinCard({ coin, onEdit }) {
             backgroundColor: isPremium ? '#FEF3C7' : '#F1F5F9',
           }]}>
             <Text style={[col.metalTagText, { color: isPremium ? '#D97706' : '#64748B' }]}>
-              {coin.category ?? coin.metal}
+              {coin.category ?? 'Other'}
             </Text>
           </View>
         </View>
@@ -85,7 +85,7 @@ function CoinCard({ coin, onEdit }) {
 
         <TouchableOpacity style={col.editBtn} onPress={() => onEdit(coin)} activeOpacity={0.7}>
           <Ionicons name="pencil-outline" size={11} color={C.textMuted} />
-          <Text style={col.editBtnText}>Edit value</Text>
+          <Text style={col.editBtnText}>Edit</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -93,14 +93,14 @@ function CoinCard({ coin, onEdit }) {
 }
 
 export default function CollectionScreen() {
-  const { coins: allCoins, loading, updateCoinValue } = useCollection();
+  const { coins: allCoins, loading, updateCoinValue, deleteCoin } = useCollection();
   const [active, setActive] = useState('All');
   const [editingCoin, setEditingCoin] = useState(null);
   const [editValue, setEditValue] = useState('');
 
   const coins = allCoins.filter(c => {
     if (active === 'All') return true;
-    return (c.category ?? 'Coins') === active;
+    return (c.category ?? 'Other') === active;
   });
 
   // Filter chips: "All" + only the categories actually present (incl. custom ones).
@@ -116,6 +116,18 @@ export default function CollectionScreen() {
   function openEdit(coin) {
     setEditingCoin(coin);
     setEditValue(String(coin.value));
+  }
+
+  function confirmDelete() {
+    const item = editingCoin;
+    Alert.alert(
+      'Delete item',
+      `Remove "${item.name}" from your collection? This can't be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => { setEditingCoin(null); deleteCoin(item.id); } },
+      ],
+    );
   }
 
   function saveEdit() {
@@ -207,7 +219,7 @@ export default function CollectionScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View style={col.modalBox}>
-            <Text style={col.modalTitle}>Edit Value</Text>
+            <Text style={col.modalTitle}>Edit item</Text>
             <Text style={col.modalSub} numberOfLines={2}>{editingCoin?.name}</Text>
             <TextInput
               style={col.modalInput}
@@ -226,6 +238,10 @@ export default function CollectionScreen() {
                 <Text style={col.modalSaveText}>Save</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity style={col.modalDelete} onPress={confirmDelete} activeOpacity={0.7}>
+              <Ionicons name="trash-outline" size={15} color={C.danger} />
+              <Text style={col.modalDeleteText}>Delete item</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -349,4 +365,9 @@ const col = StyleSheet.create({
     backgroundColor: C.accent, alignItems: 'center',
   },
   modalSaveText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  modalDelete: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    marginTop: 14, paddingVertical: 8,
+  },
+  modalDeleteText: { fontSize: 13, fontWeight: '700', color: C.danger },
 });
