@@ -40,11 +40,12 @@ async function getToken() {
   return cachedToken;
 }
 
-function median(arr) {
-  if (!arr.length) return 0;
-  const s = [...arr].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+// Linear-interpolated percentile of a pre-sorted ascending array (p in 0..1).
+function percentile(sorted, p) {
+  if (!sorted.length) return 0;
+  const idx = (sorted.length - 1) * p;
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
 /**
@@ -74,13 +75,12 @@ async function getComps(query, marketplace = 'EBAY_US') {
   const currency = (items.find(i => i.price)?.price?.currency) || 'USD';
   if (prices.length < 3) return { low: 0, median: 0, high: 0, count: prices.length, currency };
 
-  // Trim the top/bottom 10% to cut outliers (parts lots, mispriced listings).
-  const trim = Math.floor(prices.length * 0.1);
-  const core = prices.slice(trim, prices.length - trim);
+  // Use the interquartile range (25th–75th percentile) so reprints, parts lots,
+  // and mispriced listings on the extremes don't distort the "typical" range.
   return {
-    low: Math.round(core[0]),
-    median: Math.round(median(core)),
-    high: Math.round(core[core.length - 1]),
+    low: Math.round(percentile(prices, 0.25)),
+    median: Math.round(percentile(prices, 0.50)),
+    high: Math.round(percentile(prices, 0.75)),
     count: prices.length,
     currency,
   };

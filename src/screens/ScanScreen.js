@@ -434,10 +434,10 @@ export default function ScanScreen() {
                       <Ionicons name="pricetags-outline" size={15} color={C.success} />
                       <View style={{ flex: 1 }}>
                         <Text style={sc.compsTitle}>
-                          eBay market: ${scanResult.marketComps.low.toLocaleString()} – ${scanResult.marketComps.high.toLocaleString()}
+                          eBay median ${scanResult.marketComps.median.toLocaleString()}
                         </Text>
                         <Text style={sc.compsMeta}>
-                          Median ${scanResult.marketComps.median.toLocaleString()} · {scanResult.marketComps.count} live listings
+                          Typical ${scanResult.marketComps.low.toLocaleString()}–${scanResult.marketComps.high.toLocaleString()} · {scanResult.marketComps.count} live listings
                         </Text>
                       </View>
                     </View>
