@@ -27,6 +27,19 @@ export default function AuthScreen() {
   function err(text) { setMessage({ text, isError: true }); }
   function info(text) { setMessage({ text, isError: false }); }
 
+  // Turn any auth error into a clean, human message — never surface a raw HTTP response.
+  function authErrorMessage(error, fallback) {
+    const msg = error && typeof error.message === 'string' ? error.message : '';
+    const status = error?.status;
+    if (status === 502 || status === 503 || status === 504 || /timed? ?out|gateway|network|failed to fetch/i.test(msg)) {
+      return 'The server is taking too long to respond. Please try again in a moment.';
+    }
+    if (!msg || msg.length > 140 || msg.trim().startsWith('{') || msg.includes('"status"')) {
+      return fallback;
+    }
+    return msg;
+  }
+
   async function handleSubmit() {
     if (!email.trim() || !password.trim()) {
       err('Please enter your email and password.');
@@ -35,18 +48,25 @@ export default function AuthScreen() {
     clearMessage();
     setLoading(true);
 
-    const { error } =
-      mode === 'login'
-        ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
-        : await supabase.auth.signUp({ email: email.trim(), password });
+    try {
+      const { error } =
+        mode === 'login'
+          ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
+          : await supabase.auth.signUp({ email: email.trim(), password });
 
-    setLoading(false);
-    if (error) {
-      err(error.message);
-    } else if (mode === 'signup') {
-      info('Check your email to confirm your account before signing in.');
+      if (error) {
+        err(authErrorMessage(error, mode === 'login'
+          ? 'Could not sign in. Check your email and password and try again.'
+          : 'Could not create your account. Please try again.'));
+      } else if (mode === 'signup') {
+        info('Check your email to confirm your account before signing in.');
+      }
+      // On successful login, AuthContext updates the session and App re-renders automatically.
+    } catch (e) {
+      err(authErrorMessage(e, 'Something went wrong. Please try again.'));
+    } finally {
+      setLoading(false);
     }
-    // On successful login, AuthContext updates the session and App re-renders automatically.
   }
 
   function switchMode(next) {
@@ -79,14 +99,18 @@ export default function AuthScreen() {
     clearMessage();
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
-
-    setLoading(false);
-    if (error) {
-      err(error.message);
-    } else {
-      setResetStep('verify');
-      info(`We sent a 6-digit code to ${email.trim()}. Enter it below with your new password.`);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      if (error) {
+        err(authErrorMessage(error, 'Could not send the code right now. Please try again in a moment.'));
+      } else {
+        setResetStep('verify');
+        info(`If an account exists for ${email.trim()}, a 6-digit code is on its way. Enter it below with your new password.`);
+      }
+    } catch (e) {
+      err(authErrorMessage(e, 'Could not send the code right now. Please try again in a moment.'));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -102,28 +126,30 @@ export default function AuthScreen() {
     clearMessage();
     setLoading(true);
 
-    // 1) Verify the code — this signs the user in via a recovery session.
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: 'recovery',
-    });
+    try {
+      // 1) Verify the code — this signs the user in via a recovery session.
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: code.trim(),
+        type: 'recovery',
+      });
+      if (verifyError) {
+        err('That code is invalid or expired. Request a new one.');
+        return;
+      }
 
-    if (verifyError) {
+      // 2) Set the new password on the now-authenticated session.
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        err(authErrorMessage(updateError, 'Could not update your password. Please try again.'));
+      } else {
+        info('Password updated — you are now signed in.');
+        // AuthContext picks up the session and navigates to the app automatically.
+      }
+    } catch (e) {
+      err(authErrorMessage(e, 'Something went wrong. Please try again.'));
+    } finally {
       setLoading(false);
-      err('That code is invalid or expired. Request a new one.');
-      return;
-    }
-
-    // 2) Set the new password on the now-authenticated session.
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-
-    setLoading(false);
-    if (updateError) {
-      err(updateError.message);
-    } else {
-      info('Password updated — you are now signed in.');
-      // AuthContext picks up the session and navigates to the app automatically.
     }
   }
 
