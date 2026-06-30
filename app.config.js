@@ -21,6 +21,9 @@ module.exports = {
     ios: {
       supportsTablet: false,
       bundleIdentifier: 'com.trovault.app',
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
     },
     android: {
       package: 'com.trovault.app',
