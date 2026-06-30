@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Modal, Alert, Linking, ActivityIndicator,
+  Modal, Alert, Linking, ActivityIndicator, TextInput,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +10,7 @@ import { C } from '../constants/colors';
 import { useAuth } from '../context/AuthContext';
 import { usePremium } from '../context/PremiumContext';
 import { deleteAccount } from '../services/account';
+import { supabase } from '../services/supabase';
 import PaywallScreen from './PaywallScreen';
 
 const PRIVACY_URL   = 'https://drozajoshua-oss.github.io/asset-portfolio/privacy-policy.html';
@@ -38,7 +40,32 @@ export default function SettingsScreen({ visible, onClose }) {
   const [showPaywall, setShowPaywall] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // Change-password modal
+  const [showPwd, setShowPwd] = useState(false);
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [showPwdText, setShowPwdText] = useState(false);
+  const [savingPwd, setSavingPwd] = useState(false);
+
   const email = session?.user?.email ?? '—';
+
+  function openChangePwd() {
+    setNewPwd('');
+    setConfirmPwd('');
+    setShowPwdText(false);
+    setShowPwd(true);
+  }
+
+  async function savePassword() {
+    if (newPwd.length < 6) { Alert.alert('Password too short', 'Use at least 6 characters.'); return; }
+    if (newPwd !== confirmPwd) { Alert.alert('Passwords don’t match', 'Please re-enter the same password.'); return; }
+    setSavingPwd(true);
+    const { error } = await supabase.auth.updateUser({ password: newPwd });
+    setSavingPwd(false);
+    if (error) { Alert.alert('Could not update password', error.message || 'Please try again.'); return; }
+    setShowPwd(false);
+    Alert.alert('Password updated', 'Your password has been changed.');
+  }
 
   function confirmSignOut() {
     Alert.alert('Sign out', 'Are you sure you want to sign out of Trovault?', [
@@ -100,7 +127,8 @@ export default function SettingsScreen({ visible, onClose }) {
           {/* Account */}
           <Text style={set.sectionLabel}>ACCOUNT</Text>
           <View style={set.card}>
-            <Row icon="mail-outline" label="Email" value={email} last />
+            <Row icon="mail-outline" label="Email" value={email} />
+            <Row icon="key-outline" label="Change password" onPress={openChangePwd} last />
           </View>
 
           {/* Subscription */}
@@ -147,6 +175,55 @@ export default function SettingsScreen({ visible, onClose }) {
         )}
 
         <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
+
+        {/* Change password */}
+        <Modal visible={showPwd} transparent animationType="fade" onRequestClose={() => setShowPwd(false)}>
+          <KeyboardAvoidingView
+            style={set.pwdOverlay}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View style={set.pwdBox}>
+              <Text style={set.pwdTitle}>Change password</Text>
+              <Text style={set.pwdSub}>Enter a new password for {email}.</Text>
+
+              <View style={set.pwdInputWrap}>
+                <TextInput
+                  style={set.pwdInput}
+                  value={newPwd}
+                  onChangeText={setNewPwd}
+                  placeholder="New password"
+                  placeholderTextColor={C.textMuted}
+                  secureTextEntry={!showPwdText}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={() => setShowPwdText(s => !s)} hitSlop={8}>
+                  <Ionicons name={showPwdText ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={set.pwdInputWrap}>
+                <TextInput
+                  style={set.pwdInput}
+                  value={confirmPwd}
+                  onChangeText={setConfirmPwd}
+                  placeholder="Confirm new password"
+                  placeholderTextColor={C.textMuted}
+                  secureTextEntry={!showPwdText}
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={set.pwdActions}>
+                <TouchableOpacity style={set.pwdCancel} onPress={() => setShowPwd(false)} activeOpacity={0.8} disabled={savingPwd}>
+                  <Text style={set.pwdCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[set.pwdSave, savingPwd && { opacity: 0.6 }]} onPress={savePassword} activeOpacity={0.8} disabled={savingPwd}>
+                  {savingPwd ? <ActivityIndicator color="#FFF" /> : <Text style={set.pwdSaveText}>Update</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </SafeAreaView>
     </Modal>
   );
@@ -194,4 +271,33 @@ const set = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.55)',
     alignItems: 'center', justifyContent: 'center',
   },
+
+  // Change-password modal
+  pwdOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24,
+  },
+  pwdBox: {
+    width: '100%', maxWidth: 360, backgroundColor: C.surface,
+    borderRadius: 18, padding: 22, borderWidth: 1, borderColor: C.border,
+  },
+  pwdTitle: { fontSize: 17, fontWeight: '800', color: C.text },
+  pwdSub: { fontSize: 12.5, color: C.textSub, marginTop: 4, marginBottom: 16, lineHeight: 17 },
+  pwdInputWrap: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 1, borderColor: C.border, borderRadius: 10,
+    paddingHorizontal: 14, backgroundColor: C.bg, marginBottom: 12,
+  },
+  pwdInput: { flex: 1, paddingVertical: 12, fontSize: 15, color: C.text },
+  pwdActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
+  pwdCancel: {
+    flex: 1, paddingVertical: 13, borderRadius: 10,
+    borderWidth: 1, borderColor: C.border, alignItems: 'center',
+  },
+  pwdCancelText: { fontSize: 14, fontWeight: '700', color: C.textSub },
+  pwdSave: {
+    flex: 1.3, paddingVertical: 13, borderRadius: 10,
+    backgroundColor: C.accent, alignItems: 'center',
+  },
+  pwdSaveText: { fontSize: 14, fontWeight: '700', color: '#FFF' },
 });

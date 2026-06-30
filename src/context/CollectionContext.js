@@ -74,12 +74,38 @@ export function CollectionProvider({ children }) {
   }
 
   async function updateCoinValue(id, newValue) {
-    const { error } = await supabase
-      .from('assets')
-      .update({ manual_value: newValue })
-      .eq('id', id);
+    return updateCoin(id, { value: newValue });
+  }
 
-    if (!error) setCoins(prev => prev.map(c => c.id === id ? { ...c, value: newValue } : c));
+  // Update editable fields (UI shape): { name?, category?, country?, year?, value? }.
+  async function updateCoin(id, fields) {
+    const dbPatch = {};
+    if (fields.name != null)     dbPatch.name = fields.name;
+    if (fields.category != null) dbPatch.category = fields.category;
+    if (fields.country != null)  dbPatch.country = fields.country;
+    if (fields.year != null)     dbPatch.year = fields.year;
+    if (fields.value != null)    dbPatch.manual_value = fields.value;
+
+    const { error } = await supabase.from('assets').update(dbPatch).eq('id', id);
+    if (!error) setCoins(prev => prev.map(c => c.id === id ? { ...c, ...fields } : c));
+    return { error };
+  }
+
+  // Manually add an item (no scan). Fields: { name, category, country, year, value }.
+  async function addManualCoin(fields) {
+    return addCoin({
+      name:       fields.name,
+      category:   fields.category || 'Other',
+      country:    fields.country || '',
+      year:       fields.year || 0,
+      minValue:   fields.value || 0,
+      maxValue:   fields.value || 0,
+      rarity:     'common',
+      grade:      null,
+      coinColor:  '#5C6EF0',
+      symbolChar: '◆',
+      metal:      'Silver',
+    });
   }
 
   async function deleteCoin(id) {
@@ -89,7 +115,10 @@ export function CollectionProvider({ children }) {
   }
 
   return (
-    <CollectionContext.Provider value={{ coins, loading, addCoin, updateCoinValue, deleteCoin }}>
+    <CollectionContext.Provider value={{
+      coins, loading, addCoin, addManualCoin, updateCoinValue, updateCoin, deleteCoin,
+      refresh: loadAssets,
+    }}>
       {children}
     </CollectionContext.Provider>
   );
