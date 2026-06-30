@@ -1,6 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 const ebay = require('./ebay');
 
 const app = express();
@@ -195,6 +196,31 @@ app.get('/api/price', async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: err.message });
   }
+});
+
+// eBay Marketplace Account Deletion/Closure compliance endpoint.
+// Required to enable a Production keyset. We use only application tokens and store
+// NO eBay user data, so the POST handler simply acknowledges. The GET handler answers
+// eBay's verification challenge: SHA256(challengeCode + verificationToken + endpoint).
+const EBAY_VERIFICATION_TOKEN =
+  process.env.EBAY_VERIFICATION_TOKEN || 'trovault_ebay_marketplace_deletion_verification_2026';
+const EBAY_DELETION_ENDPOINT =
+  process.env.EBAY_DELETION_ENDPOINT ||
+  'https://asset-portfolio-production.up.railway.app/api/ebay/deletion';
+
+app.get('/api/ebay/deletion', (req, res) => {
+  const challengeCode = req.query.challenge_code;
+  if (!challengeCode) return res.status(400).json({ error: 'challenge_code is required.' });
+  const hash = crypto.createHash('sha256');
+  hash.update(challengeCode);
+  hash.update(EBAY_VERIFICATION_TOKEN);
+  hash.update(EBAY_DELETION_ENDPOINT);
+  res.json({ challengeResponse: hash.digest('hex') });
+});
+
+app.post('/api/ebay/deletion', (_req, res) => {
+  // No eBay user data is stored — acknowledge the notification.
+  res.sendStatus(200);
 });
 
 const PORT = process.env.PORT ?? 3001;
