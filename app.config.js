@@ -4,6 +4,7 @@ module.exports = {
     slug: 'trovault',
     owner: 'jd379',
     version: '1.0.0',
+    newArchEnabled: false,
     extra: {
       eas: {
         projectId: '27553097-c177-4015-9883-b42204259c71',
