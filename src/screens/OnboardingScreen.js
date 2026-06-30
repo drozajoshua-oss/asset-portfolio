@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
+import IconBackdrop from '../components/IconBackdrop';
 
 const SLIDES = [
   {
@@ -52,6 +53,7 @@ export default function OnboardingScreen({ onDone }) {
 
   return (
     <SafeAreaView style={ob.root} edges={['top', 'bottom']}>
+      <IconBackdrop />
       {/* Skip */}
       <View style={ob.topBar}>
         {!isLast ? (

@@ -1,6 +1,6 @@
 export const CATEGORIES = [
   'Sports Cards', 'Art', 'Coins', 'Watches', 'Sneakers',
-  'Wine', 'Jewellery', 'Vintage Cars', 'Comics', 'Stamps',
+  'Wine', 'Jewellery', 'Vintage Cars', 'Comics', 'Stamps', 'Other',
 ];
 
 export const DEMO_ITEMS = [

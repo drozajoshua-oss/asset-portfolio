@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { supabase } from '../services/supabase';
+import IconBackdrop from '../components/IconBackdrop';
 
 const MIN_PASSWORD = 6;
 
@@ -157,6 +158,7 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={au.root} edges={['top', 'bottom']}>
+      <IconBackdrop />
       <KeyboardAvoidingView
         style={au.kav}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

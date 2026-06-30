@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Animated,
-  ScrollView, Dimensions, Image, Alert, Linking,
+  ScrollView, Dimensions, Image, Alert, Linking, Modal, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { identifyAsset } from '../services/gemini';
 import { useCollection } from '../context/CollectionContext';
 import { usePremium } from '../context/PremiumContext';
+import { CATEGORIES } from '../data/items';
 import PaywallScreen from './PaywallScreen';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -70,6 +71,9 @@ export default function ScanScreen() {
   const [scanResult, setScanResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [added, setAdded] = useState(false);
+  const [category, setCategory] = useState('Other'); // editable category for the result
+  const [showCat, setShowCat] = useState(false);
+  const [customCat, setCustomCat] = useState('');
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim  = useRef(new Animated.Value(0)).current;
@@ -104,6 +108,7 @@ export default function ScanScreen() {
     try {
       const result = await identifyAsset(photoList.map(p => p.base64));
       setScanResult(result);
+      setCategory(result.category ?? 'Other');
       setState('done');
     } catch (err) {
       setErrorMsg(err.message || 'Could not identify item. Please try again.');
@@ -435,10 +440,13 @@ export default function ScanScreen() {
                       <Text style={sc.detailLbl}>GRADE</Text>
                       <Text style={sc.detailVal}>{scanResult.grade}</Text>
                     </View>
-                    <View style={sc.detailCell}>
+                    <TouchableOpacity style={sc.detailCell} onPress={() => { setCustomCat(''); setShowCat(true); }} activeOpacity={0.7}>
                       <Text style={sc.detailLbl}>CATEGORY</Text>
-                      <Text style={sc.detailVal}>{scanResult.category ?? 'Unknown'}</Text>
-                    </View>
+                      <View style={sc.catRow}>
+                        <Text style={sc.detailVal} numberOfLines={1}>{category}</Text>
+                        <Ionicons name="create-outline" size={13} color={C.accent} />
+                      </View>
+                    </TouchableOpacity>
                     <View style={sc.detailCell}>
                       <Text style={sc.detailLbl}>YEAR</Text>
                       <Text style={sc.detailVal}>{scanResult.year}</Text>
@@ -472,7 +480,7 @@ export default function ScanScreen() {
                       style={[sc.btnPrimary, added && { opacity: 0.55 }]}
                       activeOpacity={0.85}
                       disabled={added}
-                      onPress={() => { addCoin(scanResult); setAdded(true); }}
+                      onPress={() => { addCoin({ ...scanResult, category }); setAdded(true); }}
                     >
                       <Ionicons name={added ? 'checkmark-circle-outline' : 'add-circle-outline'} size={17} color="#FFF" />
                       <Text style={sc.btnPrimaryText}>{added ? 'Added!' : 'Add to Collection'}</Text>
@@ -497,6 +505,50 @@ export default function ScanScreen() {
       </View>}
 
       <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
+
+      {/* Category picker */}
+      <Modal visible={showCat} animationType="fade" transparent onRequestClose={() => setShowCat(false)}>
+        <View style={sc.catBackdrop}>
+          <View style={sc.catSheet}>
+            <Text style={sc.catTitle}>Choose a category</Text>
+            <View style={sc.catChips}>
+              {CATEGORIES.map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[sc.catChip, category === cat && sc.catChipActive]}
+                  onPress={() => { setCategory(cat); setShowCat(false); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[sc.catChipText, category === cat && sc.catChipTextActive]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={sc.catOr}>Or type your own</Text>
+            <View style={sc.catInputRow}>
+              <TextInput
+                style={sc.catInput}
+                placeholder="e.g. Vinyl Records"
+                placeholderTextColor={C.textMuted}
+                value={customCat}
+                onChangeText={setCustomCat}
+                returnKeyType="done"
+                onSubmitEditing={() => { const v = customCat.trim(); if (v) { setCategory(v); setShowCat(false); } }}
+              />
+              <TouchableOpacity
+                style={[sc.catSave, !customCat.trim() && { opacity: 0.5 }]}
+                disabled={!customCat.trim()}
+                onPress={() => { const v = customCat.trim(); if (v) { setCategory(v); setShowCat(false); } }}
+                activeOpacity={0.85}
+              >
+                <Text style={sc.catSaveText}>Set</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={sc.catCancel} onPress={() => setShowCat(false)} activeOpacity={0.7}>
+              <Text style={sc.catCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -697,6 +749,39 @@ const sc = StyleSheet.create({
   compsMeta:  { fontSize: 11, color: '#059669', marginTop: 1 },
   compsCta:     { flexDirection: 'row', alignItems: 'center', gap: 3 },
   compsCtaText: { fontSize: 12, fontWeight: '800', color: C.success },
+
+  // Editable category
+  catRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  catBackdrop: {
+    flex: 1, backgroundColor: 'rgba(10,12,24,0.55)',
+    alignItems: 'center', justifyContent: 'center', padding: 24,
+  },
+  catSheet: {
+    width: '100%', maxWidth: 420, backgroundColor: C.surface,
+    borderRadius: 18, padding: 20,
+  },
+  catTitle: { fontSize: 16, fontWeight: '800', color: C.text, marginBottom: 14 },
+  catChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  catChip: {
+    paddingHorizontal: 13, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: C.bg, borderWidth: 1, borderColor: C.border,
+  },
+  catChipActive: { backgroundColor: C.accentLight, borderColor: C.accent + '70' },
+  catChipText: { fontSize: 12.5, color: C.textSub, fontWeight: '600' },
+  catChipTextActive: { color: C.accent, fontWeight: '700' },
+  catOr: { fontSize: 11, color: C.textMuted, fontWeight: '700', letterSpacing: 0.5, marginTop: 18, marginBottom: 8 },
+  catInputRow: { flexDirection: 'row', gap: 10 },
+  catInput: {
+    flex: 1, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border,
+    borderRadius: 12, paddingHorizontal: 14, height: 48, fontSize: 14, color: C.text,
+  },
+  catSave: {
+    backgroundColor: C.accent, borderRadius: 12,
+    paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center',
+  },
+  catSaveText: { fontSize: 14, fontWeight: '800', color: '#FFF' },
+  catCancel: { alignSelf: 'center', marginTop: 16, padding: 6 },
+  catCancelText: { fontSize: 13, fontWeight: '700', color: C.textMuted },
 
   actions: { flexDirection: 'row', gap: 10 },
   btnPrimary: {

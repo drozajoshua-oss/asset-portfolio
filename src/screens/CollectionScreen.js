@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { useCollection } from '../context/CollectionContext';
-import { CATEGORIES } from '../data/items';
 
 const { width: W } = Dimensions.get('window');
 const GAP = 12;
@@ -25,12 +24,9 @@ const CATEGORY_ICONS = {
   'Vintage Cars': 'car-outline',
   'Comics':       'book-outline',
   'Stamps':       'mail-outline',
+  'Other':        'pricetag-outline',
 };
-
-const FILTERS = [
-  { label: 'All', icon: 'apps-outline' },
-  ...CATEGORIES.map(c => ({ label: c, icon: CATEGORY_ICONS[c] })),
-];
+const iconFor = cat => CATEGORY_ICONS[cat] || 'pricetag-outline';
 
 function CoinCircle({ color, symbol, size }) {
   return (
@@ -107,6 +103,13 @@ export default function CollectionScreen() {
     return (c.category ?? 'Coins') === active;
   });
 
+  // Filter chips: "All" + only the categories actually present (incl. custom ones).
+  const filters = [
+    { label: 'All', icon: 'apps-outline' },
+    ...[...new Set(allCoins.map(c => c.category).filter(Boolean))]
+      .map(c => ({ label: c, icon: iconFor(c) })),
+  ];
+
   const pairs = [];
   for (let i = 0; i < coins.length; i += 2) pairs.push(coins.slice(i, i + 2));
 
@@ -146,7 +149,7 @@ export default function CollectionScreen() {
           horizontal showsHorizontalScrollIndicator={false}
           style={col.filterBar} contentContainerStyle={col.filterContent}
         >
-          {FILTERS.map(f => {
+          {filters.map(f => {
             const isActive = active === f.label;
             return (
               <TouchableOpacity

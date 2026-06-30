@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { useCollection } from '../context/CollectionContext';
-import { CATEGORIES } from '../data/items';
 import DonutChart from '../components/DonutChart';
 import PaywallScreen from './PaywallScreen';
 import SettingsScreen from './SettingsScreen';
@@ -64,6 +63,8 @@ export default function DashboardScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+  // Category chips reflect only the categories actually in the collection (incl. custom).
+  const dashCategories = [...new Set(coins.map(c => c.category).filter(Boolean))];
   const filtered  = categoryFilter ? coins.filter(c => (c.category ?? 'Coins') === categoryFilter) : coins;
   const totalValue = filtered.reduce((s, c) => s + c.value, 0);
   const countries  = [...new Set(filtered.map(c => c.country))].length;
@@ -155,7 +156,7 @@ export default function DashboardScreen() {
           horizontal showsHorizontalScrollIndicator={false}
           style={ds.filterBar} contentContainerStyle={ds.filterContent}
         >
-          {['All', ...CATEGORIES].map(cat => {
+          {['All', ...dashCategories].map(cat => {
             const isActive = cat === 'All' ? categoryFilter === null : categoryFilter === cat;
             return (
               <TouchableOpacity

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { usePremium } from '../context/PremiumContext';
+import IconBackdrop from '../components/IconBackdrop';
 
 const GOLD = '#F5B301';
 
@@ -80,6 +81,7 @@ export default function PaywallScreen({ visible, onClose }) {
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={pw.root} edges={['top', 'bottom']}>
+        <IconBackdrop tint={GOLD} opacity={0.05} />
         {/* Close */}
         <View style={pw.topBar}>
           <TouchableOpacity onPress={onClose} hitSlop={12} activeOpacity={0.7} style={pw.closeBtn}>
