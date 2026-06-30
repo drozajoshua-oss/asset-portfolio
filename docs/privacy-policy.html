@@ -93,8 +93,9 @@
     <p>To provide core features, the App relies on the following service providers, who process data only on our behalf:</p>
     <ul>
       <li><strong>Google (Gemini API).</strong> Photos you scan are sent to Google's Gemini image-analysis service to identify the item. Your use is subject to Google's privacy practices. We send only the image and an identification prompt — no account details.</li>
+      <li><strong>eBay (Browse API).</strong> To estimate an item's market value, the name of the identified item (text only) is sent to eBay to retrieve current public listing prices. No account details, photos, or personal data are sent to eBay, and we do not store any eBay data.</li>
       <li><strong>Supabase.</strong> Provides authentication and the secure database that stores your account and collection data.</li>
-      <li><strong>Railway.</strong> Hosts the server that relays scan requests to the identification service.</li>
+      <li><strong>Railway.</strong> Hosts the server that relays scan and pricing requests to the identification and market-value services.</li>
     </ul>
 
     <h2>Camera and Photo Permissions</h2>

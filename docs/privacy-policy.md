@@ -29,8 +29,9 @@ This Privacy Policy explains how **Trovault** ("the App", "we", "us") handles in
 To provide core features, the App relies on the following service providers, who process data only on our behalf:
 
 - **Google (Gemini API).** Photos you scan are sent to Google's Gemini image-analysis service to identify the item. Your use is subject to Google's privacy practices. We send only the image and an identification prompt — no account details.
+- **eBay (Browse API).** To estimate an item's market value, the name of the identified item (text only) is sent to eBay to retrieve current public listing prices. No account details, photos, or personal data are sent to eBay, and we do not store any eBay data.
 - **Supabase.** Provides authentication and the secure database that stores your account and collection data.
-- **Railway.** Hosts the server that relays scan requests to the identification service.
+- **Railway.** Hosts the server that relays scan and pricing requests to the identification and market-value services.
 
 ## Camera and Photo Permissions
 
