@@ -21,6 +21,17 @@ import { CollectionProvider }            from './src/context/CollectionContext';
 import { PremiumProvider }               from './src/context/PremiumContext';
 import ErrorBoundary                     from './src/components/ErrorBoundary';
 
+// Startup safety net: in a RELEASE build an unhandled JS error/rejection escalates
+// to a native abort() (SIGABRT) before any UI mounts — a hard crash with a black
+// screen. This handler logs the error and swallows it so the app keeps running
+// instead of crashing. (React render errors are still handled by ErrorBoundary.)
+if (global.ErrorUtils && !global.__trovaultErrorGuard) {
+  global.__trovaultErrorGuard = true;
+  global.ErrorUtils.setGlobalHandler((error, isFatal) => {
+    console.warn('[Trovault] caught global error (fatal=' + isFatal + '):', error?.message, error?.stack);
+  });
+}
+
 const Tab = createBottomTabNavigator();
 
 const TABS = {
