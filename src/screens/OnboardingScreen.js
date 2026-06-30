@@ -12,7 +12,7 @@ const SLIDES = [
   {
     icon: 'diamond-outline',
     title: 'Welcome to Trovault',
-    body: 'The smart home for everything you collect — coins, cards, watches, art and more, all in one place.',
+    body: 'Finally know what your collection is worth. Coins, cards, watches, art and more — identified, valued, and tracked in one place.',
   },
   {
     icon: 'scan-outline',
