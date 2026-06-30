@@ -37,6 +37,7 @@ module.exports = {
     },
     plugins: [
       'expo-asset',
+      'expo-font',
       [
         'expo-image-picker',
         {
