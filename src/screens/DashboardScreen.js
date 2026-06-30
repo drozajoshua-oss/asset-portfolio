@@ -68,7 +68,6 @@ export default function DashboardScreen() {
   const filtered  = categoryFilter ? coins.filter(c => (c.category ?? 'Coins') === categoryFilter) : coins;
   const totalValue = filtered.reduce((s, c) => s + c.value, 0);
   const countries  = [...new Set(filtered.map(c => c.country))].length;
-  const goldTotal  = filtered.filter(c => c.metal === 'Gold').reduce((s, c) => s + c.value, 0);
   const avgValue   = filtered.length > 0 ? Math.round(totalValue / filtered.length) : 0;
   const topCoins   = [...filtered].sort((a, b) => b.value - a.value).slice(0, 5);
   const chartData  = (() => {
@@ -120,7 +119,7 @@ export default function DashboardScreen() {
           <View style={ds.heroStats}>
             <View style={ds.heroStat}>
               <Text style={ds.heroStatNum}>{coins.length}</Text>
-              <Text style={ds.heroStatLbl}>Coins</Text>
+              <Text style={ds.heroStatLbl}>Items</Text>
             </View>
             <View style={ds.heroStatDiv} />
             <View style={ds.heroStat}>
@@ -174,22 +173,22 @@ export default function DashboardScreen() {
         {/* ── Stat cards row ── */}
         <View style={ds.statsRow}>
           <StatCard
-            icon="star-outline" iconBg="#FEF3C7" iconColor="#D97706"
-            label="GOLD VALUE"
-            value={`$${goldTotal.toLocaleString()}`}
-            sub={`${coins.filter(c => c.metal === 'Gold').length} coins`}
+            icon="trophy-outline" iconBg="#FEF3C7" iconColor="#D97706"
+            label="TOP ITEM"
+            value={`$${(topCoins[0]?.value || 0).toLocaleString()}`}
+            sub="Most valuable"
           />
           <StatCard
             icon="diamond-outline" iconBg={C.accentLight} iconColor={C.accent}
-            label="RARE COINS"
-            value={coins.filter(c => c.rarity === 'rare' || c.rarity === 'legendary').length}
+            label="RARE+"
+            value={filtered.filter(c => c.rarity === 'rare' || c.rarity === 'legendary').length}
             sub="Rare or above" subColor={RARITY.rare.color}
           />
           <StatCard
-            icon="globe-outline" iconBg={C.successLight} iconColor={C.success}
-            label="COUNTRIES"
-            value={countries}
-            sub="Origins"
+            icon="albums-outline" iconBg={C.successLight} iconColor={C.success}
+            label="CATEGORIES"
+            value={dashCategories.length}
+            sub="Collected"
           />
         </View>
 
@@ -216,7 +215,7 @@ export default function DashboardScreen() {
           </View>
           <View style={[ds.card, CARD_SHADOW]}>
             {topCoins.length === 0
-              ? <Text style={{ color: C.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 12 }}>No coins yet — scan one to get started.</Text>
+              ? <Text style={{ color: C.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 12 }}>No items yet — scan one to get started.</Text>
               : topCoins.map((coin, i) => (
                 <View key={coin.id}>
                   <TopRow coin={coin} rank={i + 1} maxValue={topCoins[0].value} />
@@ -234,11 +233,11 @@ export default function DashboardScreen() {
           </View>
           <View style={[ds.card, CARD_SHADOW, { padding: 0, overflow: 'hidden' }]}>
             {[
-              { label: 'Gold coins',    value: coins.filter(c => c.metal === 'Gold').length,   color: '#D97706' },
-              { label: 'Silver coins',  value: coins.filter(c => c.metal === 'Silver').length, color: C.textSub },
-              { label: 'Common',        value: coins.filter(c => c.rarity === 'common').length,   color: RARITY.common.color },
-              { label: 'Uncommon',      value: coins.filter(c => c.rarity === 'uncommon').length, color: RARITY.uncommon.color },
-              { label: 'Rare or above', value: coins.filter(c => c.rarity === 'rare' || c.rarity === 'legendary').length, color: RARITY.rare.color },
+              { label: 'Categories', value: dashCategories.length,                              color: C.accent },
+              { label: 'Common',      value: filtered.filter(c => c.rarity === 'common').length,    color: RARITY.common.color },
+              { label: 'Uncommon',    value: filtered.filter(c => c.rarity === 'uncommon').length,  color: RARITY.uncommon.color },
+              { label: 'Rare',        value: filtered.filter(c => c.rarity === 'rare').length,      color: RARITY.rare.color },
+              { label: 'Legendary',   value: filtered.filter(c => c.rarity === 'legendary').length, color: RARITY.legendary.color },
             ].map((row, i, arr) => (
               <View key={row.label} style={[ds.summaryRow, i < arr.length - 1 && ds.summaryBorder]}>
                 <Text style={ds.summaryLabel}>{row.label}</Text>

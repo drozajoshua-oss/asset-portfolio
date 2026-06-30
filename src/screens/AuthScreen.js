@@ -20,6 +20,7 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', isError: false });
@@ -218,10 +219,13 @@ export default function AuthScreen() {
                     placeholderTextColor={C.textMuted}
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     returnKeyType="done"
                     onSubmitEditing={handleSubmit}
                   />
+                  <TouchableOpacity onPress={() => setShowPassword(v => !v)} hitSlop={8} activeOpacity={0.7}>
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.textMuted} />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -316,10 +320,13 @@ export default function AuthScreen() {
                         placeholderTextColor={C.textMuted}
                         value={newPassword}
                         onChangeText={setNewPassword}
-                        secureTextEntry
+                        secureTextEntry={!showPassword}
                         returnKeyType="done"
                         onSubmitEditing={verifyResetCode}
                       />
+                      <TouchableOpacity onPress={() => setShowPassword(v => !v)} hitSlop={8} activeOpacity={0.7}>
+                        <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={C.textMuted} />
+                      </TouchableOpacity>
                     </View>
                   </>
                 )}
