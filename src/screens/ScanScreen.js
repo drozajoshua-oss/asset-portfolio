@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Animated,
-  ScrollView, Dimensions, Image, Alert,
+  ScrollView, Dimensions, Image, Alert, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -203,6 +203,13 @@ export default function ScanScreen() {
 
   const r = scanResult ? (RARITY[scanResult.rarity] ?? RARITY.common) : RARITY.common;
 
+  // Open the live eBay listings for this item. To monetize later, wrap this URL
+  // in an eBay Partner Network (EPN) rover link with your campaign id.
+  function openEbay(query) {
+    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`;
+    Linking.openURL(url).catch(() => {});
+  }
+
   return (
     <View style={sc.root}>
 
@@ -241,6 +248,15 @@ export default function ScanScreen() {
                   <Text style={sc.btnRetakeText}>Retake</Text>
                 </TouchableOpacity>
               </View>
+              {/* Accuracy nudge */}
+              {photos.length < MAX_PHOTOS && (
+                <View style={sc.reviewTip}>
+                  <Ionicons name="bulb-outline" size={13} color="rgba(255,255,255,0.85)" />
+                  <Text style={sc.reviewTipText}>
+                    Add more angles — including the side with the date — for a more accurate ID.
+                  </Text>
+                </View>
+              )}
               {/* Stacked action buttons */}
               {photos.length < MAX_PHOTOS && (
                 <TouchableOpacity style={sc.btnAddAngle} onPress={handleAddAngle} activeOpacity={0.85}>
@@ -358,7 +374,7 @@ export default function ScanScreen() {
               </View>
             ) : scansRemaining > 0 ? (
               <Text style={sc.scanMeterText}>
-                {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left today
+                {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left
               </Text>
             ) : (
               <TouchableOpacity onPress={() => setShowPaywall(true)} activeOpacity={0.7} hitSlop={8}>
@@ -430,7 +446,11 @@ export default function ScanScreen() {
                   </View>
 
                   {scanResult.marketComps?.count >= 3 && (
-                    <View style={sc.compsRow}>
+                    <TouchableOpacity
+                      style={sc.compsRow}
+                      onPress={() => openEbay(scanResult.name)}
+                      activeOpacity={0.8}
+                    >
                       <Ionicons name="pricetags-outline" size={15} color={C.success} />
                       <View style={{ flex: 1 }}>
                         <Text style={sc.compsTitle}>
@@ -440,7 +460,11 @@ export default function ScanScreen() {
                           Typical ${scanResult.marketComps.low.toLocaleString()}–${scanResult.marketComps.high.toLocaleString()} · {scanResult.marketComps.count} live listings
                         </Text>
                       </View>
-                    </View>
+                      <View style={sc.compsCta}>
+                        <Text style={sc.compsCtaText}>View</Text>
+                        <Ionicons name="open-outline" size={13} color={C.success} />
+                      </View>
+                    </TouchableOpacity>
                   )}
 
                   <View style={sc.actions}>
@@ -558,6 +582,11 @@ const sc = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(92,110,240,0.55)',
   },
   reviewBadgeText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
+  reviewTip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 2, marginBottom: 2,
+  },
+  reviewTipText: { flex: 1, fontSize: 11.5, color: 'rgba(255,255,255,0.85)', lineHeight: 15 },
 
   // ── Bottom area ──────────────────────────────────────────────────────────
   bottomArea: {
@@ -666,6 +695,8 @@ const sc = StyleSheet.create({
   },
   compsTitle: { fontSize: 13, fontWeight: '800', color: '#047857' },
   compsMeta:  { fontSize: 11, color: '#059669', marginTop: 1 },
+  compsCta:     { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  compsCtaText: { fontSize: 12, fontWeight: '800', color: C.success },
 
   actions: { flexDirection: 'row', gap: 10 },
   btnPrimary: {

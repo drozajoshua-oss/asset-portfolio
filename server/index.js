@@ -48,7 +48,7 @@ Rules for ALL collectibles:
 - name: specific, descriptive (e.g. "1986 Fleer Michael Jordan Rookie #57", "Rolex Submariner Ref. 116610LN", "1909-S VDB Lincoln Cent")
 - category: must be exactly one of: Coins, Sports Cards, Art, Watches, Jewellery, Sneakers, Wine, Vintage Cars, Comics, Stamps
 - country: country of origin, manufacture, or issue
-- year: a number — the issue year, production year, or vintage (e.g. 1986 for a card, 1959 for a watch)
+- year: a number — the issue/production year or vintage of the ITEM (e.g. 1986 for a card, 1959 for a watch). Read it from the date printed on the item. NEVER output today's date or the current year. If no year is printed and you cannot reasonably infer the item's age from its design, set year to 0 rather than guessing. If photos show different sides, use the one that actually displays the date.
 - minValue and maxValue: USD fair-market value estimates as numbers; set both to 0 if unknown
 - rarity must be exactly one of: common, uncommon, rare, legendary
 - grade: use the grading standard appropriate for the category:

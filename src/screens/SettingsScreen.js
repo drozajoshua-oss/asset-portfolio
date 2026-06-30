@@ -133,6 +133,10 @@ export default function SettingsScreen({ visible, onClose }) {
             <Row icon="trash-outline" label="Delete account" onPress={confirmDelete} destructive last />
           </View>
 
+          <Text style={set.disclaimer}>
+            Identifications and values are AI- and market-based estimates for guidance only — not professional appraisals. For high-value items, confirm with a qualified appraiser.
+          </Text>
+
           <Text style={set.footnote}>Trovault · {APP_VERSION}</Text>
         </ScrollView>
 
@@ -182,7 +186,8 @@ const set = StyleSheet.create({
   rowLabel: { flex: 1, fontSize: 14, color: C.text, fontWeight: '500' },
   rowValue: { fontSize: 13, color: C.textMuted },
 
-  footnote: { textAlign: 'center', fontSize: 11, color: C.textMuted, marginTop: 28 },
+  disclaimer: { fontSize: 11, lineHeight: 16, color: C.textMuted, textAlign: 'center', marginTop: 22, paddingHorizontal: 6 },
+  footnote: { textAlign: 'center', fontSize: 11, color: C.textMuted, marginTop: 16 },
 
   busyOverlay: {
     ...StyleSheet.absoluteFillObject,

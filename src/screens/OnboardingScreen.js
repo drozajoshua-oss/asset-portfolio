@@ -16,7 +16,7 @@ const SLIDES = [
   {
     icon: 'scan-outline',
     title: 'Scan & Identify',
-    body: 'Snap a photo and let AI identify your item, read its details, and estimate its market value in seconds.',
+    body: 'Snap a photo and let AI identify your item — then see its real market value, backed by live eBay listings, in seconds.',
   },
   {
     icon: 'albums-outline',
