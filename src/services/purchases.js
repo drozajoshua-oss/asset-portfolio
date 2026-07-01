@@ -1,25 +1,27 @@
 import { Platform } from 'react-native';
 
 /**
- * RevenueCat integration — currently SCAFFOLDED / STUBBED.
+ * RevenueCat integration.
  *
- * Why stubbed: `react-native-purchases` ships native code and does NOT run in
- * Expo Go. Enabling it requires a custom EAS dev build. Until then this module
- * exposes the full purchase API as no-ops so the rest of the app can call it
- * safely and the UI is already wired.
+ * `react-native-purchases` ships native code and does NOT run in Expo Go — it
+ * requires a native build (`expo run:ios` locally, or an EAS build). Every
+ * function no-ops while REVENUECAT_ENABLED is false, so the rest of the app can
+ * call them safely before billing is switched on.
  *
  * ── To go live ──────────────────────────────────────────────────────────────
- *  1. Install the SDK:           npx expo install react-native-purchases
- *  2. Create a dev/production build with EAS (Expo Go will not work).
- *  3. Fill in RC_API_KEYS below from the RevenueCat dashboard (Project → API keys).
- *  4. In RevenueCat, create an entitlement (default id 'premium') and an Offering
- *     with packages whose identifiers match PLAN_PACKAGES below.
- *  5. Set REVENUECAT_ENABLED = true and uncomment the `Purchases` lines.
+ *  1. In App Store Connect, create the two auto-renewable subscriptions and note
+ *     their product ids (e.g. com.trovault.app.premium.monthly / .annual).
+ *  2. In RevenueCat: add the App Store app + shared secret, attach the products,
+ *     map them to packages $rc_monthly / $rc_annual in the default Offering, and
+ *     put both under an entitlement with id ENTITLEMENT_ID ('premium').
+ *  3. Paste the RevenueCat public iOS SDK key into RC_API_KEYS.ios below.
+ *  4. Set REVENUECAT_ENABLED = true and rebuild (native module already bundled).
  */
 
 export const REVENUECAT_ENABLED = false;
 
-// Public SDK keys from RevenueCat → Project Settings → API keys.
+// Public SDK keys from RevenueCat → Project Settings → API keys (these are the
+// *public* app-specific keys — safe to ship in the client; not the secret key).
 export const RC_API_KEYS = {
   ios: 'appl_XXXXXXXXXXXXXXXXXXXXXXXX',
   android: 'goog_XXXXXXXXXXXXXXXXXXXXXXXX',
@@ -34,45 +36,57 @@ export const PLAN_PACKAGES = {
   monthly: '$rc_monthly',
 };
 
-// let Purchases; // require('react-native-purchases').default once enabled
+// Lazily required so the native module is never touched while disabled.
+let Purchases;
+function rc() {
+  if (!Purchases) Purchases = require('react-native-purchases').default;
+  return Purchases;
+}
 
-/** Configure the SDK once at app start. Safe no-op while stubbed. */
+/** Configure the SDK once at app start. Safe no-op while disabled. */
 export async function initPurchases() {
   if (!REVENUECAT_ENABLED) return;
-  // Purchases = require('react-native-purchases').default;
-  // const apiKey = Platform.OS === 'ios' ? RC_API_KEYS.ios : RC_API_KEYS.android;
-  // Purchases.configure({ apiKey });
+  const apiKey = Platform.OS === 'ios' ? RC_API_KEYS.ios : RC_API_KEYS.android;
+  rc().configure({ apiKey });
 }
 
 /** Returns whether the current user has the premium entitlement. */
 export async function fetchIsPremium() {
   if (!REVENUECAT_ENABLED) return false;
-  // const info = await Purchases.getCustomerInfo();
-  // return !!info.entitlements.active[ENTITLEMENT_ID];
+  try {
+    const info = await rc().getCustomerInfo();
+    return !!info.entitlements.active[ENTITLEMENT_ID];
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Purchase a plan. Returns { ok, reason? }.
- * reason 'not_configured' means billing isn't wired yet (stub).
+ * reason 'not_configured' means billing isn't switched on yet.
  */
 export async function purchasePlan(planId) {
   if (!REVENUECAT_ENABLED) return { ok: false, reason: 'not_configured' };
-  // const offerings = await Purchases.getOfferings();
-  // const pkg = offerings.current?.availablePackages
-  //   .find(p => p.identifier === PLAN_PACKAGES[planId]);
-  // if (!pkg) return { ok: false, reason: 'package_not_found' };
-  // try {
-  //   const { customerInfo } = await Purchases.purchasePackage(pkg);
-  //   return { ok: !!customerInfo.entitlements.active[ENTITLEMENT_ID] };
-  // } catch (e) {
-  //   if (e.userCancelled) return { ok: false, reason: 'cancelled' };
-  //   return { ok: false, reason: 'error', message: e.message };
-  // }
+  try {
+    const offerings = await rc().getOfferings();
+    const pkg = offerings.current?.availablePackages
+      .find(p => p.identifier === PLAN_PACKAGES[planId]);
+    if (!pkg) return { ok: false, reason: 'package_not_found' };
+    const { customerInfo } = await rc().purchasePackage(pkg);
+    return { ok: !!customerInfo.entitlements.active[ENTITLEMENT_ID] };
+  } catch (e) {
+    if (e.userCancelled) return { ok: false, reason: 'cancelled' };
+    return { ok: false, reason: 'error', message: e.message };
+  }
 }
 
 /** Restore previous purchases. Returns { ok, reason? }. */
 export async function restorePurchases() {
   if (!REVENUECAT_ENABLED) return { ok: false, reason: 'not_configured' };
-  // const info = await Purchases.restorePurchases();
-  // return { ok: !!info.entitlements.active[ENTITLEMENT_ID] };
+  try {
+    const info = await rc().restorePurchases();
+    return { ok: !!info.entitlements.active[ENTITLEMENT_ID] };
+  } catch (e) {
+    return { ok: false, reason: 'error', message: e.message };
+  }
 }
