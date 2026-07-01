@@ -48,7 +48,7 @@ function TopRow({ coin, rank, maxValue }) {
         <View style={ds.barTrack}>
           <View style={[ds.barFill, { width: `${barPct * 100}%`, backgroundColor: r.color }]} />
         </View>
-        <Text style={ds.topMeta}>{coin.country} · {coin.year} · {coin.metal}</Text>
+        <Text style={ds.topMeta}>{[coin.category, coin.country, coin.year].filter(Boolean).join(' · ')}</Text>
       </View>
 
       <Text style={ds.topVal}>${coin.value.toLocaleString()}</Text>

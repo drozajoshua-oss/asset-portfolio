@@ -61,7 +61,7 @@ const PREMIUM = new Set(['Watches', 'Art', 'Vintage Cars', 'Jewellery']);
 
 function CoinCard({ coin, onOpen }) {
   const r = RARITY[coin.rarity] ?? RARITY.common;
-  const isPremium = coin.category ? PREMIUM.has(coin.category) : coin.metal === 'Gold';
+  const isPremium = PREMIUM.has(coin.category);
   return (
     <TouchableOpacity
       style={[col.card, { width: CARD_W }, CARD_SHADOW]}
