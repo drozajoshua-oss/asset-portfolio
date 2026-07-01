@@ -107,7 +107,7 @@ export default function AuthScreen() {
         err(authErrorMessage(error, 'Could not send the code right now. Please try again in a moment.'));
       } else {
         setResetStep('verify');
-        info(`If an account exists for ${email.trim()}, a 6-digit code is on its way. Enter it below with your new password.`);
+        info(`If an account exists for ${email.trim()}, a reset code is on its way. Enter it below with your new password.`);
       }
     } catch (e) {
       err(authErrorMessage(e, 'Could not send the code right now. Please try again in a moment.'));
@@ -118,7 +118,7 @@ export default function AuthScreen() {
 
   async function verifyResetCode() {
     if (code.trim().length < 6) {
-      err('Enter the 6-digit code from your email.');
+      err('Enter the code from your email.');
       return;
     }
     if (newPassword.length < MIN_PASSWORD) {
@@ -275,7 +275,7 @@ export default function AuthScreen() {
 
               <Text style={au.resetSub}>
                 {resetStep === 'request'
-                  ? "Enter your email and we'll send you a 6-digit reset code."
+                  ? "Enter your email and we'll send you a reset code."
                   : 'Enter the code from your email and choose a new password.'}
               </Text>
 
@@ -303,12 +303,12 @@ export default function AuthScreen() {
                       <Ionicons name="keypad-outline" size={16} color={C.textMuted} style={au.fieldIcon} />
                       <TextInput
                         style={[au.input, au.codeInput]}
-                        placeholder="6-digit code"
+                        placeholder="Enter code"
                         placeholderTextColor={C.textMuted}
                         value={code}
-                        onChangeText={t => setCode(t.replace(/[^0-9]/g, '').slice(0, 6))}
+                        onChangeText={t => setCode(t.replace(/[^0-9]/g, '').slice(0, 10))}
                         keyboardType="number-pad"
-                        maxLength={6}
+                        maxLength={10}
                         returnKeyType="next"
                       />
                     </View>
