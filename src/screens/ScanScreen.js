@@ -208,6 +208,10 @@ export default function ScanScreen() {
 
   const r = scanResult ? (RARITY[scanResult.rarity] ?? RARITY.common) : RARITY.common;
 
+  // In the 'done' state, shrink the viewfinder to a compact confirmation badge so
+  // the results card below gets the majority of the screen (and can scroll).
+  const circleSize = state === 'done' ? Math.min(VF, H * 0.28) : VF;
+
   // Open the live eBay listings for this item. To monetize later, wrap this URL
   // in an eBay Partner Network (EPN) rover link with your campaign id.
   function openEbay(query) {
@@ -237,7 +241,7 @@ export default function ScanScreen() {
           <View style={sc.reviewArea}>
             <Image
               source={{ uri: pickedImage }}
-              style={StyleSheet.absoluteFill}
+              style={sc.reviewImage}
               resizeMode="cover"
             />
             {/* Dark gradient overlay at the bottom with all controls */}
@@ -258,7 +262,7 @@ export default function ScanScreen() {
                 <View style={sc.reviewTip}>
                   <Ionicons name="bulb-outline" size={13} color="rgba(255,255,255,0.85)" />
                   <Text style={sc.reviewTipText}>
-                    Add more angles — including the side with the date — for a more accurate ID.
+                    Add more angles — front, back, and any markings or labels — for a more accurate ID.
                   </Text>
                 </View>
               )}
@@ -284,7 +288,7 @@ export default function ScanScreen() {
               activeOpacity={0.85}
             >
               <Animated.View style={[sc.vfCircle, {
-                width: VF, height: VF, borderRadius: VF / 2,
+                width: circleSize, height: circleSize, borderRadius: circleSize / 2,
                 transform: state === 'idle' ? [{ scale: pulseAnim }] : [],
                 borderColor: state === 'done'
                   ? C.accent
@@ -295,7 +299,7 @@ export default function ScanScreen() {
                 {pickedImage && (
                   <Image
                     source={{ uri: pickedImage }}
-                    style={[StyleSheet.absoluteFill, { borderRadius: VF / 2 }]}
+                    style={[StyleSheet.absoluteFill, { borderRadius: circleSize / 2 }]}
                     resizeMode="cover"
                   />
                 )}
@@ -334,7 +338,7 @@ export default function ScanScreen() {
       </View>
 
       {/* ── Light control / results area — hidden during reviewing (controls live on image overlay) ── */}
-      {state !== 'reviewing' && <View style={sc.bottomArea}>
+      {state !== 'reviewing' && <View style={[sc.bottomArea, state === 'done' && sc.bottomAreaDone]}>
 
         {/* Capture controls — idle or scanning */}
         {(state === 'idle' || state === 'scanning') && (
@@ -613,13 +617,16 @@ const sc = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
   },
-  // Frosted-dark gradient band at the bottom of the image
+  // Big full-width photo at the top of the review area
+  reviewImage: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#05060D',
+  },
+  // Controls flow directly beneath the photo (no wasted space)
   reviewOverlay: {
-    position: 'absolute',
-    left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.60)',
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 16,
     paddingBottom: 28,
     gap: 10,
   },
@@ -647,6 +654,8 @@ const sc = StyleSheet.create({
     borderTopColor: C.border,
     minHeight: 130,
   },
+  // Done state: take the remaining screen so the results ScrollView can scroll.
+  bottomAreaDone: { flex: 1 },
   captureRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 26, gap: 38,
