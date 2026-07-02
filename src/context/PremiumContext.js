@@ -18,10 +18,14 @@ export function PremiumProvider({ children }) {
 
   useEffect(() => {
     let active = true;
+    const withTimeout = (p, ms, fallback) =>
+      Promise.race([p, new Promise(res => setTimeout(() => res(fallback), ms))]);
     (async () => {
-      await initPurchases();
       try {
-        const premium = await fetchIsPremium();
+        await initPurchases();
+        // StoreKit can stall for seconds when products aren't available yet —
+        // never let it hold up first paint.
+        const premium = await withTimeout(fetchIsPremium(), 4000, false);
         if (active) setIsPremium(premium);
       } catch (_) {
         // ignore — default to not premium
