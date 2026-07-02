@@ -30,6 +30,10 @@ export const RC_API_KEYS = {
 // The entitlement that unlocks premium, as configured in RevenueCat.
 export const ENTITLEMENT_ID = 'premium';
 
+// react-native-purchases is native-only; on web every call must stay a no-op
+// so the module is never required and the web bundle can't crash.
+const RC_ENABLED = REVENUECAT_ENABLED && Platform.OS !== 'web';
+
 // Maps our in-app plan ids (see PaywallScreen) to RevenueCat package identifiers.
 export const PLAN_PACKAGES = {
   annual: '$rc_annual',
@@ -45,14 +49,14 @@ function rc() {
 
 /** Configure the SDK once at app start. Safe no-op while disabled. */
 export async function initPurchases() {
-  if (!REVENUECAT_ENABLED) return;
+  if (!RC_ENABLED) return;
   const apiKey = Platform.OS === 'ios' ? RC_API_KEYS.ios : RC_API_KEYS.android;
   rc().configure({ apiKey });
 }
 
 /** Returns whether the current user has the premium entitlement. */
 export async function fetchIsPremium() {
-  if (!REVENUECAT_ENABLED) return false;
+  if (!RC_ENABLED) return false;
   try {
     const info = await rc().getCustomerInfo();
     return !!info.entitlements.active[ENTITLEMENT_ID];
@@ -66,7 +70,7 @@ export async function fetchIsPremium() {
  * reason 'not_configured' means billing isn't switched on yet.
  */
 export async function purchasePlan(planId) {
-  if (!REVENUECAT_ENABLED) return { ok: false, reason: 'not_configured' };
+  if (!RC_ENABLED) return { ok: false, reason: 'not_configured' };
   try {
     const offerings = await rc().getOfferings();
     const pkg = offerings.current?.availablePackages
@@ -82,7 +86,7 @@ export async function purchasePlan(planId) {
 
 /** Restore previous purchases. Returns { ok, reason? }. */
 export async function restorePurchases() {
-  if (!REVENUECAT_ENABLED) return { ok: false, reason: 'not_configured' };
+  if (!RC_ENABLED) return { ok: false, reason: 'not_configured' };
   try {
     const info = await rc().restorePurchases();
     return { ok: !!info.entitlements.active[ENTITLEMENT_ID] };
