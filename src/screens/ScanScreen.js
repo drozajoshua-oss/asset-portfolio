@@ -367,7 +367,14 @@ export default function ScanScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={sc.sideBtn}>
+            <TouchableOpacity
+              style={sc.sideBtn}
+              onPress={() => Alert.alert(
+                'Scanning tips',
+                '• Use bright, even lighting\n• Fill the frame with your item\n• Add angles: front, back, and any markings or labels\n• For coins and cards, get close on dates and fine details'
+              )}
+              activeOpacity={0.8}
+            >
               <Ionicons name="help-circle-outline" size={22} color={C.textSub} />
             </TouchableOpacity>
           </View>
@@ -382,9 +389,19 @@ export default function ScanScreen() {
                 <Text style={sc.scanMeterPremium}>Premium · Unlimited scans</Text>
               </View>
             ) : scansRemaining > 0 ? (
-              <Text style={sc.scanMeterText}>
-                {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left
-              </Text>
+              <View style={sc.scanMeterRow}>
+                <Text style={sc.scanMeterText}>
+                  {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left
+                </Text>
+                <TouchableOpacity
+                  style={sc.scanMeterBtn}
+                  onPress={() => setShowPaywall(true)}
+                  activeOpacity={0.8}
+                  hitSlop={6}
+                >
+                  <Text style={sc.scanMeterBtnText}>Go Premium</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               <TouchableOpacity onPress={() => setShowPaywall(true)} activeOpacity={0.7} hitSlop={8}>
                 <Text style={sc.scanMeterUpgrade}>You're out of free scans — Go Premium →</Text>
@@ -705,6 +722,11 @@ const sc = StyleSheet.create({
   scanMeterText:    { fontSize: 12, color: C.textMuted, fontWeight: '600' },
   scanMeterPremium: { fontSize: 12, color: C.accent, fontWeight: '700' },
   scanMeterUpgrade: { fontSize: 12.5, color: C.accent, fontWeight: '700' },
+  scanMeterBtn: {
+    marginLeft: 8, paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 999, backgroundColor: C.accentSoft ?? '#EEF2FF',
+  },
+  scanMeterBtnText: { fontSize: 12, color: C.accent, fontWeight: '700' },
 
   errorWrap: {
     alignItems: 'center', justifyContent: 'center',
