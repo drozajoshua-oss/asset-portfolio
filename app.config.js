@@ -16,7 +16,7 @@ module.exports = {
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',
-      backgroundColor: '#080B16',
+      backgroundColor: '#2563EB',
     },
     ios: {
       supportsTablet: false,
@@ -29,7 +29,7 @@ module.exports = {
       package: 'com.trovault.app',
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
-        backgroundColor: '#080B16',
+        backgroundColor: '#2563EB',
       },
     },
     web: {
