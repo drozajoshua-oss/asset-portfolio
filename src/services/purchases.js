@@ -18,12 +18,12 @@ import { Platform } from 'react-native';
  *  4. Set REVENUECAT_ENABLED = true and rebuild (native module already bundled).
  */
 
-export const REVENUECAT_ENABLED = false;
+export const REVENUECAT_ENABLED = true;
 
 // Public SDK keys from RevenueCat → Project Settings → API keys (these are the
 // *public* app-specific keys — safe to ship in the client; not the secret key).
 export const RC_API_KEYS = {
-  ios: 'appl_XXXXXXXXXXXXXXXXXXXXXXXX',
+  ios: 'appl_TJXkEAPWeqZBIVILbHmJSyNvVva',
   android: 'goog_XXXXXXXXXXXXXXXXXXXXXXXX',
 };
 
