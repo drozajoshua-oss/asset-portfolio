@@ -16,7 +16,7 @@ import PaywallScreen from './PaywallScreen';
 const { width: W, height: H } = Dimensions.get('window');
 // Larger circle so tall items (cards, stamps) clip less at the edges.
 const VF = Math.min(W * 0.92, H * 0.50);
-const MAX_PHOTOS = 3;
+const MAX_PHOTOS = 5;
 
 function CoinCircle({ color, symbol, size }) {
   return (
@@ -152,28 +152,56 @@ export default function ScanScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsMultipleSelection: true,
+      selectionLimit: MAX_PHOTOS,
       quality: 0.7,
       base64: true,
       mediaTypes: ['images'],
     });
     if (result.canceled) return;
-    const asset = result.assets[0];
-    setPhotos([{ uri: asset.uri, base64: asset.base64 }]);
-    setPickedImage(asset.uri);
+    const picked = result.assets.slice(0, MAX_PHOTOS)
+      .map(a => ({ uri: a.uri, base64: a.base64 }));
+    setPhotos(picked);
+    setPickedImage(picked[picked.length - 1].uri);
     setState('reviewing');
   };
 
-  // Add another angle from the review screen.
-  const handleAddAngle = async () => {
-    if (photos.length >= MAX_PHOTOS) return;
-    const asset = await launchCamera();
-    if (!asset) return; // user cancelled — stay on review screen unchanged
-    const next = [...photos, { uri: asset.uri, base64: asset.base64 }];
+  // Append more shots from the gallery while reviewing.
+  const addFromGallery = async () => {
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsMultipleSelection: true,
+      selectionLimit: remaining,
+      quality: 0.7,
+      base64: true,
+      mediaTypes: ['images'],
+    });
+    if (result.canceled) return;
+    const added = result.assets.slice(0, remaining)
+      .map(a => ({ uri: a.uri, base64: a.base64 }));
+    const next = [...photos, ...added];
     setPhotos(next);
-    setPickedImage(asset.uri);
-    // state stays 'reviewing', photo count badge updates automatically
+    setPickedImage(next[next.length - 1].uri);
+  };
+
+  // Add another angle from the review screen — camera or gallery.
+  const handleAddAngle = () => {
+    if (photos.length >= MAX_PHOTOS) return;
+    Alert.alert('Add another angle', null, [
+      {
+        text: 'Take photo',
+        onPress: async () => {
+          const asset = await launchCamera();
+          if (!asset) return; // user cancelled — stay on review screen unchanged
+          const next = [...photos, { uri: asset.uri, base64: asset.base64 }];
+          setPhotos(next);
+          setPickedImage(asset.uri);
+        },
+      },
+      { text: 'Choose from gallery', onPress: addFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   // Discard the most-recent photo and re-open the camera immediately.
