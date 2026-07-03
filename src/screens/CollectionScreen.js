@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions,
   Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
-  RefreshControl, Linking,
+  RefreshControl, Linking, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,7 +73,11 @@ function CoinCard({ coin, onOpen }) {
 
       <View style={col.cardBody}>
         <View style={col.coinWrap}>
-          <CoinCircle color={coin.coinColor} symbol={coin.symbolChar} size={68} />
+          {coin.photoUrls?.[0] ? (
+            <Image source={{ uri: coin.photoUrls[0] }} style={col.cardPhoto} />
+          ) : (
+            <CoinCircle color={coin.coinColor} symbol={coin.symbolChar} size={68} />
+          )}
         </View>
 
         <Text style={col.coinName} numberOfLines={2}>{coin.name}</Text>
@@ -450,10 +454,22 @@ export default function CollectionScreen() {
             {detailCoin && (
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={col.detailHead}>
-                  <CoinCircle color={detailCoin.coinColor} symbol={detailCoin.symbolChar} size={84} />
+                  {detailCoin.photoUrls?.[0] ? (
+                    <Image source={{ uri: detailCoin.photoUrls[0] }} style={col.detailPhoto} />
+                  ) : (
+                    <CoinCircle color={detailCoin.coinColor} symbol={detailCoin.symbolChar} size={84} />
+                  )}
                   <Text style={col.detailName}>{detailCoin.name}</Text>
                   <Text style={col.detailMeta}>{detailCoin.country} · {detailCoin.year || '—'}</Text>
                 </View>
+
+                {detailCoin.photoUrls?.length > 1 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={col.photoStrip}>
+                    {detailCoin.photoUrls.map((url, i) => (
+                      <Image key={i} source={{ uri: url }} style={col.photoStripImg} />
+                    ))}
+                  </ScrollView>
+                )}
 
                 <View style={col.detailValueCard}>
                   <Text style={col.detailValueLabel}>ESTIMATED VALUE</Text>
@@ -637,6 +653,7 @@ const col = StyleSheet.create({
   stripe: { height: 4 },
   cardBody: { padding: 14 },
   coinWrap: { alignItems: 'center', marginBottom: 12 },
+  cardPhoto: { width: 68, height: 68, borderRadius: 16, backgroundColor: '#EEF2FF' },
   coinName: { fontSize: 13, fontWeight: '700', color: C.text, lineHeight: 18, textAlign: 'center' },
   coinMeta: { fontSize: 11, color: C.textSub, textAlign: 'center', marginTop: 2 },
 
@@ -693,6 +710,9 @@ const col = StyleSheet.create({
 
   // Detail view
   detailHead: { alignItems: 'center', marginBottom: 18 },
+  detailPhoto: { width: 132, height: 132, borderRadius: 20, backgroundColor: '#EEF2FF', marginBottom: 4 },
+  photoStrip: { marginBottom: 16 },
+  photoStripImg: { width: 88, height: 88, borderRadius: 12, marginRight: 8, backgroundColor: '#EEF2FF' },
   detailName: { fontSize: 19, fontWeight: '800', color: C.text, textAlign: 'center', marginTop: 14 },
   detailMeta: { fontSize: 13, color: C.textSub, marginTop: 4 },
   detailValueCard: {

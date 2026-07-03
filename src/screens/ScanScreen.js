@@ -501,7 +501,7 @@ export default function ScanScreen() {
                       style={[sc.btnPrimary, added && { opacity: 0.55 }]}
                       activeOpacity={0.85}
                       disabled={added}
-                      onPress={() => { addCoin({ ...scanResult, category }); setAdded(true); }}
+                      onPress={() => { addCoin({ ...scanResult, category, photos }); setAdded(true); }}
                     >
                       <Ionicons name={added ? 'checkmark-circle-outline' : 'add-circle-outline'} size={17} color="#FFF" />
                       <Text style={sc.btnPrimaryText}>{added ? 'Added!' : 'Add to Collection'}</Text>

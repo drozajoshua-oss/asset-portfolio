@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
+import { uploadItemPhotos } from '../services/photos';
 import { useAuth } from './AuthContext';
 
 const CollectionContext = createContext(null);
@@ -18,6 +19,7 @@ function mapRowToCoin(row) {
     metal: row.metal ?? 'Silver',
     coinColor: row.coin_color ?? '#C0C0C0',
     symbolChar: row.symbol_char ?? '?',
+    photoUrls: row.photo_urls ?? [],
   };
 }
 
@@ -48,7 +50,16 @@ export function CollectionProvider({ children }) {
   async function addCoin(scanResult) {
     if (!session?.user) return { error: new Error('Not logged in') };
 
+    // Upload scan photos first so the row lands with its URLs in one insert.
+    // Upload failures degrade to a photo-less item rather than blocking the save.
+    let photoUrls = [];
+    if (scanResult.photos?.length) {
+      const { urls } = await uploadItemPhotos(session.user.id, scanResult.photos);
+      photoUrls = urls;
+    }
+
     const row = {
+      photo_urls:           photoUrls,
       user_id:              session.user.id,
       name:                 scanResult.name,
       category:             scanResult.category ?? 'Other',
