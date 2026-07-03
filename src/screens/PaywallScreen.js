@@ -158,10 +158,14 @@ export default function PaywallScreen({ visible, onClose }) {
             >
               {busy
                 ? <ActivityIndicator color="#FFF" />
-                : <Text style={pw.ctaText}>Start 7-day free trial</Text>}
+                : <Text style={pw.ctaText}>
+                    {plan.id === 'annual' ? 'Start 7-day free trial' : 'Subscribe now'}
+                  </Text>}
             </TouchableOpacity>
             <Text style={pw.ctaSub}>
-              Then {plan.price}{plan.per} · Cancel anytime
+              {plan.id === 'annual'
+                ? `7 days free, then ${plan.price}${plan.per} · Cancel anytime`
+                : `${plan.price}${plan.per} · Cancel anytime`}
             </Text>
             <TouchableOpacity onPress={handleRestore} disabled={busy} hitSlop={8} activeOpacity={0.7}>
               <Text style={pw.restore}>Restore purchases</Text>
