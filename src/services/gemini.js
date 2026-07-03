@@ -42,19 +42,32 @@ export async function identifyAsset(base64Images) {
   // Best-effort: enrich with real eBay marketplace pricing. Never blocks the result.
   data.marketComps = await fetchMarketPrice(data.name);
 
+  // A $0 estimate reads as a failed scan. When the model couldn't price the
+  // item but real eBay comps exist, use the comps range as the estimate.
+  if (!data.minValue && !data.maxValue && data.marketComps) {
+    const { low, median, high } = data.marketComps;
+    data.minValue = Math.round(low ?? (median ? median * 0.85 : 0));
+    data.maxValue = Math.round(high ?? (median ? median * 1.15 : 0));
+  }
+
   return data;
 }
 
 // Fetches real active-listing price stats from eBay (via the server proxy).
+// The comps call is occasionally flaky, so one failure gets a single retry.
 // Returns { low, median, high, count, currency } or null.
-async function fetchMarketPrice(query) {
+async function fetchMarketPrice(query, attempt = 0) {
   if (!query) return null;
   try {
     const res = await fetch(`${PROXY_BASE}/api/price?q=${encodeURIComponent(query)}`);
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`price ${res.status}`);
     const json = await res.json();
     return json.comps && json.comps.count >= 3 ? json.comps : null;
   } catch (_) {
+    if (attempt === 0) {
+      await new Promise(r => setTimeout(r, 800));
+      return fetchMarketPrice(query, 1);
+    }
     return null;
   }
 }

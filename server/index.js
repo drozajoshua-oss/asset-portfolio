@@ -90,7 +90,56 @@ Rules for ALL collectibles:
     Sneakers/Wine/Art/Vintage Cars → Silver
 - If you cannot identify the item confidently, set name to "Unknown Collectible", category to the best guess, and both values to 0`;
 
+// Extra instructions for grounded calls. Search Grounding cannot be combined
+// with responseMimeType JSON, so the grounded call relies on the prompt alone
+// to keep the output parseable.
+const SEARCH_ADDENDUM = `
+
+You have access to Google Search. After identifying the item, SEARCH for its current market value — recent sold listings and price guides — and base minValue and maxValue on what you find, not on memory. Never leave both values at 0 when search results give any price signal. Your final answer must still be ONLY the JSON object: no citations, no source names, no text before or after it.`;
+
 app.get('/health', (_req, res) => res.json({ ok: true }));
+
+// Pulls the JSON object out of a Gemini response. Grounded responses can come
+// back in several text parts and occasionally wrapped in markdown fences.
+function extractJsonText(data) {
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const text = parts.map(p => p.text ?? '').join('');
+  const match = text.match(/\{[\s\S]*\}/);
+  return match ? match[0] : text;
+}
+
+async function callGemini(images, { grounded }) {
+  const geminiRes = await fetch(`${GEMINI_URL}?key=${API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          // All images first so Gemini reads text from every angle before the prompt.
+          ...images.map(img => ({ inlineData: { mimeType: 'image/jpeg', data: img } })),
+          { text: grounded ? PROMPT + SEARCH_ADDENDUM : PROMPT },
+        ],
+      }],
+      ...(grounded ? { tools: [{ google_search: {} }] } : {}),
+      generationConfig: {
+        temperature: 0.1,
+        // JSON output mode is incompatible with Search Grounding.
+        ...(grounded ? {} : { responseMimeType: 'application/json' }),
+      },
+    }),
+  });
+
+  const data = await geminiRes.json();
+  if (!geminiRes.ok) {
+    const err = new Error(data.error?.message ?? `Gemini API error ${geminiRes.status}`);
+    err.status = geminiRes.status;
+    throw err;
+  }
+
+  const text = extractJsonText(data);
+  JSON.parse(text); // throws if unparseable -> caller falls back
+  return text;
+}
 
 app.post('/api/identify', async (req, res) => {
   if (!API_KEY) {
@@ -105,34 +154,20 @@ app.post('/api/identify', async (req, res) => {
   }
 
   try {
-    const geminiRes = await fetch(`${GEMINI_URL}?key=${API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            // All images first so Gemini reads text from every angle before the prompt.
-            ...images.map(img => ({ inlineData: { mimeType: 'image/jpeg', data: img } })),
-            { text: PROMPT },
-          ],
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          responseMimeType: 'application/json',
-        },
-      }),
-    });
-
-    const data = await geminiRes.json();
-
-    if (!geminiRes.ok) {
-      const msg = data.error?.message ?? `Gemini API error ${geminiRes.status}`;
-      return res.status(geminiRes.status).json({ error: msg });
+    let text;
+    try {
+      // Grounded first: real market prices via Google Search.
+      text = await callGemini(images, { grounded: true });
+    } catch (err) {
+      // Grounding unavailable (tier limits) or unparseable output — plain call.
+      console.warn(`Grounded identify failed (${err.message}); retrying without search.`);
+      text = await callGemini(images, { grounded: false });
     }
 
-    res.json(data);
+    // Same response shape the app already expects.
+    res.json({ candidates: [{ content: { parts: [{ text }] } }] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status ?? 500).json({ error: err.message });
   }
 });
 
