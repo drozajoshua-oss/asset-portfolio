@@ -37,7 +37,7 @@ export async function uploadItemPhotos(userId, photos, itemKey = Date.now()) {
     try {
       const { error } = await supabase.storage
         .from(BUCKET)
-        .upload(path, base64ToBytes(b64), { contentType: 'image/jpeg', upsert: true });
+        .upload(path, base64ToBytes(b64), { contentType: 'image/jpeg' });
       if (error) { lastError = error; continue; }
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
       if (data?.publicUrl) urls.push(data.publicUrl);
