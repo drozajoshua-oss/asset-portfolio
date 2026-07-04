@@ -4,10 +4,16 @@ import {
   initPurchases, fetchIsPremium, purchasePlan, restorePurchases,
 } from '../services/purchases';
 
-// Free users get this many identifications total (lifetime — does NOT reset);
-// after that they must upgrade. Premium is unlimited.
+// Free users get this many identifications PER CALENDAR MONTH; the counter
+// resets on the 1st. Premium is unlimited.
 export const FREE_SCAN_LIMIT = 5;
-const SCAN_COUNT_KEY = 'scan_count_v2';
+const SCAN_COUNT_KEY = 'scan_count_v3'; // JSON: { period: 'YYYY-MM', count }
+
+// e.g. '2026-07' — scan counts are scoped to this key so a new month starts fresh.
+function currentPeriod() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
 
 const PremiumContext = createContext(null);
 
@@ -32,7 +38,11 @@ export function PremiumProvider({ children }) {
       }
       try {
         const raw = await AsyncStorage.getItem(SCAN_COUNT_KEY);
-        if (raw && active) setScanCount(parseInt(raw, 10) || 0);
+        if (raw && active) {
+          const { period, count } = JSON.parse(raw);
+          // A stored count from a previous month is stale — the quota reset.
+          if (period === currentPeriod()) setScanCount(parseInt(count, 10) || 0);
+        }
       } catch (_) {
         // ignore — default to zero usage
       }
@@ -41,11 +51,14 @@ export function PremiumProvider({ children }) {
     return () => { active = false; };
   }, []);
 
-  // Count one identification against the lifetime free quota.
+  // Count one identification against this month's free quota.
   function recordScan() {
     setScanCount(prev => {
       const next = prev + 1;
-      AsyncStorage.setItem(SCAN_COUNT_KEY, String(next)).catch(() => {});
+      AsyncStorage.setItem(
+        SCAN_COUNT_KEY,
+        JSON.stringify({ period: currentPeriod(), count: next }),
+      ).catch(() => {});
       return next;
     });
   }

@@ -419,7 +419,7 @@ export default function ScanScreen() {
             ) : scansRemaining > 0 ? (
               <View style={sc.scanMeterRow}>
                 <Text style={sc.scanMeterText}>
-                  {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left
+                  {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left this month
                 </Text>
                 <TouchableOpacity
                   style={sc.scanMeterBtn}
@@ -432,7 +432,7 @@ export default function ScanScreen() {
               </View>
             ) : (
               <TouchableOpacity onPress={() => setShowPaywall(true)} activeOpacity={0.7} hitSlop={8}>
-                <Text style={sc.scanMeterUpgrade}>You're out of free scans — Go Premium →</Text>
+                <Text style={sc.scanMeterUpgrade}>Out of free scans this month — Go Premium →</Text>
               </TouchableOpacity>
             )}
           </View>

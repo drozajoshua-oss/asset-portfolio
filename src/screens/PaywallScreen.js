@@ -12,7 +12,7 @@ import IconBackdrop from '../components/IconBackdrop';
 const GOLD = '#F5B301';
 
 const FEATURES = [
-  { icon: 'infinite',         title: 'Unlimited scans',         body: 'Identify as many items as you want, with no daily limit.' },
+  { icon: 'infinite',         title: 'Unlimited scans',         body: 'Identify as many items as you want — no monthly cap.' },
   { icon: 'images',           title: 'Multi-angle AI',          body: 'Combine several photos for a more accurate identification.' },
   { icon: 'trending-up',      title: 'Live market values',      body: 'Up-to-date value estimates across every collectible category.' },
   { icon: 'stats-chart',      title: 'Full portfolio analytics', body: 'Track your total worth, breakdowns, and top movers.' },
