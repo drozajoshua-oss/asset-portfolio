@@ -6,7 +6,7 @@ import {
 
 // Free users get this many identifications total (lifetime — does NOT reset);
 // after that they must upgrade. Premium is unlimited.
-export const FREE_SCAN_LIMIT = 10;
+export const FREE_SCAN_LIMIT = 3;
 const SCAN_COUNT_KEY = 'scan_count_v2';
 
 const PremiumContext = createContext(null);
