@@ -246,6 +246,11 @@
 </style>
 </head>
 <body>
+<script>
+  // Arriving with a #fragment (screenshots, shared links): jump instantly
+  // instead of animating, so the target section is framed immediately.
+  if (location.hash) document.documentElement.style.scrollBehavior = 'auto';
+</script>
 
 <!-- ── Live-market ticker ── -->
 <div class="ticker-wrap" aria-hidden="true">
@@ -313,7 +318,7 @@
 </header>
 
 <!-- ── Markets ── -->
-<section class="block">
+<section class="block" id="markets-section">
   <div class="sec-eyebrow">Markets we cover</div>
   <h2 class="sec-title">Every collectible category. One vault.</h2>
   <p class="sec-sub">Trovault identifies the exact item — brand, year, grade — then prices it against live listings and recent sales.</p>
