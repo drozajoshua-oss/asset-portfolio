@@ -254,6 +254,80 @@ app.post('/api/subscribe', async (req, res) => {
   }
 });
 
+// Live ticker for the landing page: real eBay median prices for a fixed set
+// of marquee collectibles, with % change vs the previous daily snapshot
+// (stored in the Supabase `price_history` table). Cached in memory for 12h so
+// a page load never hits eBay directly; change is null until history exists.
+const TICKER_ITEMS = [
+  { label: 'Air Jordan 1 Chicago',       q: 'Air Jordan 1 Retro Chicago' },
+  { label: 'Rolex Submariner',           q: 'Rolex Submariner watch' },
+  { label: '1921 Morgan Dollar',         q: '1921 Morgan Silver Dollar' },
+  { label: 'Charizard Base Set',         q: 'Charizard Base Set holo PSA' },
+  { label: 'Omega Speedmaster',          q: 'Omega Speedmaster Professional' },
+  { label: 'Amazing Spider-Man #300',    q: 'Amazing Spider-Man 300 comic' },
+  { label: '1986 Fleer Jordan',          q: '1986 Fleer Michael Jordan rookie PSA' },
+  { label: 'Hermès Birkin 30',           q: 'Hermes Birkin 30 bag' },
+  { label: 'Penny Black Stamp',          q: 'Penny Black 1840 stamp' },
+  { label: 'LEGO UCS Millennium Falcon', q: 'LEGO 75192 Millennium Falcon sealed' },
+];
+let tickerCache = { at: 0, data: null };
+
+app.get('/api/ticker', async (req, res) => {
+  if (tickerCache.data && Date.now() - tickerCache.at < 12 * 3600 * 1000) {
+    return res.json(tickerCache.data);
+  }
+  if (!ebay.isConfigured()) return res.status(503).json({ error: 'Pricing not configured.' });
+
+  const SUPA_URL     = process.env.SUPABASE_URL;
+  const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supaHeaders  = {
+    Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE,
+    'Content-Type': 'application/json',
+  };
+  const today = new Date().toISOString().slice(0, 10);
+
+  try {
+    // Most recent snapshot per label from a PREVIOUS day, for % change.
+    let prior = {};
+    if (SUPA_URL && SERVICE_ROLE) {
+      const hist = await fetch(
+        `${SUPA_URL}/rest/v1/price_history?day=lt.${today}&order=day.desc&limit=${TICKER_ITEMS.length * 3}`,
+        { headers: supaHeaders },
+      ).then(r => (r.ok ? r.json() : [])).catch(() => []);
+      for (const row of hist) if (!(row.label in prior)) prior[row.label] = Number(row.price);
+    }
+
+    const items = [];
+    for (const t of TICKER_ITEMS) {
+      try {
+        const comps = await ebay.getComps(t.q, 'EBAY_US');
+        if (!comps.median) continue;
+        const prev = prior[t.label];
+        items.push({
+          label: t.label,
+          price: comps.median,
+          change: prev ? Number((((comps.median - prev) / prev) * 100).toFixed(1)) : null,
+        });
+      } catch (_) { /* skip items eBay chokes on — ticker degrades gracefully */ }
+    }
+    if (!items.length) return res.status(502).json({ error: 'No prices available.' });
+
+    // Upsert today's snapshot so tomorrow has something to diff against.
+    if (SUPA_URL && SERVICE_ROLE) {
+      fetch(`${SUPA_URL}/rest/v1/price_history?on_conflict=day,label`, {
+        method: 'POST',
+        headers: { ...supaHeaders, Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(items.map(i => ({ day: today, label: i.label, price: i.price }))),
+      }).catch(() => {});
+    }
+
+    tickerCache = { at: Date.now(), data: { items, asOf: new Date().toISOString() } };
+    res.json(tickerCache.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Real marketplace pricing for an identified item (active eBay listings).
 // Requires EBAY_CLIENT_ID + EBAY_CLIENT_SECRET (Production keyset) env vars.
 app.get('/api/price', async (req, res) => {

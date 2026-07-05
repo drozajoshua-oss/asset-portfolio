@@ -365,29 +365,41 @@
   </div>
   <div class="disclaimer">
     Identifications and values are AI- and market-based estimates for guidance only — not professional appraisals.
-    Sample items and prices shown above are illustrative. For high-value items, confirm with a qualified appraiser.
+    Ticker prices are median asking prices from live eBay listings where available; other sample items and prices
+    shown are illustrative. For high-value items, confirm with a qualified appraiser.
   </div>
 </footer>
 
 <script>
-  // ── Ticker: illustrative market items (labelled as such in the footer) ──
-  const TICKS = [
-    ['Air Jordan 1 Chicago', '$1,850', +2.3],
-    ['Rolex Submariner 5513', '$18,200', +1.4],
-    ['1921 Morgan Dollar MS-63', '$130', -0.8],
-    ['Charizard Base Set PSA 8', '$1,320', +5.2],
-    ['Omega Speedmaster 3570', '$4,950', +0.6],
-    ['Amazing Spider-Man #300', '$980', +3.1],
-    ['1986 Fleer Jordan PSA 7', '$9,400', -1.2],
-    ['Hermès Birkin 30', '$14,750', +0.9],
-    ['Penny Black 1840', '$2,100', +1.8],
-    ['LEGO UCS Falcon 75192', '$1,060', +2.7],
+  // ── Ticker: live eBay medians from our API, illustrative fallback if it's
+  //    unreachable. `change` is % vs the previous daily snapshot (null on day 1).
+  const FALLBACK_TICKS = [
+    ['Air Jordan 1 Chicago', 1850, 2.3],
+    ['Rolex Submariner 5513', 18200, 1.4],
+    ['1921 Morgan Dollar MS-63', 130, -0.8],
+    ['Charizard Base Set PSA 8', 1320, 5.2],
+    ['Omega Speedmaster 3570', 4950, 0.6],
+    ['Amazing Spider-Man #300', 980, 3.1],
+    ['1986 Fleer Jordan PSA 7', 9400, -1.2],
+    ['Hermès Birkin 30', 14750, 0.9],
+    ['Penny Black 1840', 2100, 1.8],
+    ['LEGO UCS Falcon 75192', 1060, 2.7],
   ];
-  const tickHtml = TICKS.map(([n, p, c]) =>
-    `<span class="tick"><span class="name">${n}</span><span class="price">${p}</span>` +
-    `<span class="chg ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '▲' : '▼'} ${Math.abs(c).toFixed(1)}%</span></span>`
-  ).join('');
-  document.getElementById('ticker').innerHTML = tickHtml + tickHtml; // duplicated for seamless loop
+  function renderTicker(rows) {
+    const html = rows.map(([n, p, c]) =>
+      `<span class="tick"><span class="name">${n}</span><span class="price">$${Number(p).toLocaleString()}</span>` +
+      (c == null ? '' :
+        `<span class="chg ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '▲' : '▼'} ${Math.abs(c).toFixed(1)}%</span>`)
+    ).join('');
+    document.getElementById('ticker').innerHTML = html + html; // duplicated for seamless loop
+  }
+  renderTicker(FALLBACK_TICKS);
+  fetch('https://asset-portfolio-production.up.railway.app/api/ticker')
+    .then(r => (r.ok ? r.json() : null))
+    .then(d => {
+      if (d?.items?.length >= 5) renderTicker(d.items.map(i => [i.label, i.price, i.change]));
+    })
+    .catch(() => {});
 
   // ── Market category cards with sparklines (icon halos use the app's *Light tints) ──
   const MARKETS = [
