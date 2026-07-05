@@ -217,6 +217,43 @@ app.post('/api/delete-account', async (req, res) => {
   }
 });
 
+// Landing-page waitlist signup. Stores the email in the Supabase `waitlist`
+// table via the service role (same env vars as delete-account). Duplicate
+// emails are treated as success so the form never scolds a returning visitor.
+app.post('/api/subscribe', async (req, res) => {
+  const SUPA_URL     = process.env.SUPABASE_URL;
+  const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPA_URL || !SERVICE_ROLE) {
+    return res.status(500).json({ error: 'Waitlist is not configured on the server yet.' });
+  }
+
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    return res.status(400).json({ error: 'A valid email is required.' });
+  }
+
+  try {
+    const ins = await fetch(`${SUPA_URL}/rest/v1/waitlist`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        apikey: SERVICE_ROLE,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ email, source: String(req.body?.source || 'landing').slice(0, 40) }),
+    });
+    // 409 = duplicate email (unique constraint) — that visitor is already on the list.
+    if (!ins.ok && ins.status !== 409) {
+      const e = await ins.json().catch(() => ({}));
+      return res.status(502).json({ error: e.message || 'Could not save your email.' });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Real marketplace pricing for an identified item (active eBay listings).
 // Requires EBAY_CLIENT_ID + EBAY_CLIENT_SECRET (Production keyset) env vars.
 app.get('/api/price', async (req, res) => {

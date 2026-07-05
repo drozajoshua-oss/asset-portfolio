@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trovault — Know What Your Collection Is Worth</title>
+<meta name="description" content="Scan any collectible with your iPhone and get an instant AI identification and live market value. Coins, cards, watches, sneakers, comics and more.">
+<style>
+  :root {
+    --navy: #0B1026;
+    --navy-2: #111735;
+    --navy-3: #1A2147;
+    --gold: #F5B301;
+    --gold-soft: rgba(245, 179, 1, 0.12);
+    --text: #EEF1FA;
+    --text-sub: #9AA3C0;
+    --text-muted: #6B7494;
+    --green: #2ECC71;
+    --red: #FF5C5C;
+    --accent: #5C6EF0;
+    --border: rgba(255, 255, 255, 0.08);
+    --card: rgba(255, 255, 255, 0.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Ticker tape ── */
+  .ticker-wrap {
+    background: var(--navy-2);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 9px 0;
+    font-size: 13px;
+  }
+  .ticker { display: inline-block; animation: scroll 45s linear infinite; }
+  .ticker-wrap:hover .ticker { animation-play-state: paused; }
+  @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .tick { display: inline-flex; align-items: center; gap: 7px; margin: 0 22px; }
+  .tick .name { color: var(--text-sub); font-weight: 600; }
+  .tick .price { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tick .chg { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+
+  /* ── Nav ── */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 1120px; margin: 0 auto; padding: 20px 24px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 19px; letter-spacing: 0.5px; }
+  .logo .gem {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(145deg, #151B3B, #0B1026);
+    border: 1px solid rgba(245, 179, 1, 0.45);
+    display: grid; place-items: center; font-size: 16px;
+  }
+  .nav-cta {
+    background: var(--gold); color: #241A00; font-weight: 800; font-size: 14px;
+    padding: 10px 18px; border-radius: 10px; transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245, 179, 1, 0.35); }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 1120px; margin: 0 auto; padding: 56px 24px 72px;
+    display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--gold-soft); border: 1px solid rgba(245, 179, 1, 0.35);
+    color: var(--gold); font-size: 12.5px; font-weight: 700;
+    padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(34px, 5vw, 54px); line-height: 1.08; font-weight: 900; letter-spacing: -1.5px;
+    margin-bottom: 18px;
+  }
+  .hero h1 .gold { color: var(--gold); }
+  .hero p.sub { font-size: 18px; line-height: 1.6; color: var(--text-sub); max-width: 480px; margin-bottom: 30px; }
+
+  .capture { display: flex; gap: 10px; max-width: 460px; }
+  .capture input {
+    flex: 1; background: var(--navy-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 12px; padding: 15px 16px; font-size: 15px; outline: none; min-width: 0;
+    transition: border-color 0.15s ease;
+  }
+  .capture input:focus { border-color: var(--gold); }
+  .capture button {
+    background: var(--gold); color: #241A00; border: none; cursor: pointer;
+    font-weight: 800; font-size: 15px; padding: 15px 22px; border-radius: 12px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease; white-space: nowrap;
+  }
+  .capture button:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245, 179, 1, 0.35); }
+  .capture-note { font-size: 12.5px; color: var(--text-muted); margin-top: 12px; }
+  .capture-done { display: none; align-items: center; gap: 10px; background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 12px; padding: 15px 18px;
+    color: var(--green); font-weight: 700; font-size: 15px; max-width: 460px; }
+
+  .hero-stats { display: flex; gap: 34px; margin-top: 40px; }
+  .hstat .num { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
+  .hstat .num .gold { color: var(--gold); }
+  .hstat .lbl { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
+
+  /* ── Phone mock ── */
+  .phone-wrap { display: flex; justify-content: center; position: relative; }
+  .phone-glow {
+    position: absolute; width: 420px; height: 420px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,179,1,0.14) 0%, rgba(92,110,240,0.1) 45%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
+  }
+  .phone {
+    width: 300px; border-radius: 42px; background: #05070F;
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 40px 90px rgba(0,0,0,0.55), inset 0 0 0 8px #05070F;
+    padding: 14px; position: relative; z-index: 1;
+  }
+  .screen { border-radius: 30px; background: linear-gradient(180deg, #10163A 0%, #0B1026 100%); overflow: hidden; }
+  .s-head { padding: 20px 18px 12px; }
+  .s-eyebrow { font-size: 9px; letter-spacing: 1.4px; color: var(--text-muted); font-weight: 800; }
+  .s-title { font-size: 17px; font-weight: 900; margin-top: 2px; }
+  .s-card {
+    margin: 6px 14px 12px; border-radius: 16px; padding: 16px;
+    background: linear-gradient(135deg, #5C6EF0 0%, #4353C9 100%);
+  }
+  .s-card .lbl { font-size: 8.5px; letter-spacing: 1.3px; font-weight: 800; color: rgba(255,255,255,0.75); }
+  .s-card .val { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-top: 3px; }
+  .s-card .badge {
+    display: inline-flex; align-items: center; gap: 4px; margin-top: 10px;
+    background: rgba(255,255,255,0.18); border-radius: 6px; padding: 4px 8px;
+    font-size: 9.5px; font-weight: 800; color: #B8F5CF;
+  }
+  .s-row {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 14px 10px; padding: 11px 12px; border-radius: 13px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .s-ico { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 15px; flex-shrink: 0; }
+  .s-info { flex: 1; min-width: 0; }
+  .s-name { font-size: 11.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .s-cat { font-size: 9px; color: var(--text-muted); font-weight: 600; margin-top: 1px; }
+  .s-val { text-align: right; }
+  .s-price { font-size: 12px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .s-chg { font-size: 9px; font-weight: 800; }
+  .s-foot { padding: 6px 0 18px; text-align: center; }
+  .s-scan {
+    display: inline-block; background: var(--gold); color: #241A00;
+    font-size: 11px; font-weight: 900; padding: 10px 26px; border-radius: 999px;
+  }
+
+  /* ── Section scaffolding ── */
+  section.block { max-width: 1120px; margin: 0 auto; padding: 64px 24px; }
+  .sec-eyebrow { font-size: 12px; letter-spacing: 1.6px; color: var(--gold); font-weight: 800; text-transform: uppercase; }
+  .sec-title { font-size: clamp(26px, 3.4vw, 36px); font-weight: 900; letter-spacing: -0.8px; margin-top: 8px; }
+  .sec-sub { color: var(--text-sub); font-size: 16px; margin-top: 10px; max-width: 560px; line-height: 1.55; }
+
+  /* ── Markets grid ── */
+  .markets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 34px; }
+  .mkt {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .mkt:hover { transform: translateY(-3px); border-color: rgba(245, 179, 1, 0.4); }
+  .mkt-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .mkt-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 17px; }
+  .mkt-chg { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .mkt-name { font-size: 14.5px; font-weight: 800; }
+  .mkt-ex { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+  .mkt svg { display: block; width: 100%; height: 34px; margin-top: 12px; }
+
+  /* ── How it works ── */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 34px; }
+  .step { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .step .n {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--gold-soft);
+    border: 1px solid rgba(245, 179, 1, 0.35); color: var(--gold);
+    display: grid; place-items: center; font-weight: 900; font-size: 15px; margin-bottom: 16px;
+  }
+  .step h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+  .step p { font-size: 14px; color: var(--text-sub); line-height: 1.6; }
+
+  /* ── Bottom CTA ── */
+  .cta-band {
+    max-width: 1120px; margin: 0 auto 72px; padding: 52px 32px; text-align: center;
+    background: linear-gradient(135deg, var(--navy-3) 0%, var(--navy-2) 100%);
+    border: 1px solid var(--border); border-radius: 24px; position: relative; overflow: hidden;
+  }
+  .cta-band::before {
+    content: ""; position: absolute; width: 520px; height: 520px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,179,1,0.1) 0%, transparent 65%);
+    top: -260px; left: 50%; transform: translateX(-50%); pointer-events: none;
+  }
+  .cta-band h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 900; letter-spacing: -0.8px; }
+  .cta-band p { color: var(--text-sub); margin: 12px auto 28px; max-width: 460px; font-size: 16px; line-height: 1.55; }
+  .cta-band .capture, .cta-band .capture-done { margin: 0 auto; }
+
+  footer { border-top: 1px solid var(--border); }
+  .foot-in {
+    max-width: 1120px; margin: 0 auto; padding: 28px 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .foot-links { display: flex; gap: 22px; }
+  .foot-links a:hover { color: var(--text-sub); }
+
+  .disclaimer {
+    max-width: 1120px; margin: 0 auto; padding: 0 24px 26px;
+    font-size: 11.5px; color: var(--text-muted); line-height: 1.6;
+  }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-top: 36px; gap: 40px; }
+    .hero p.sub { max-width: none; }
+    .markets { grid-template-columns: repeat(2, 1fr); }
+    .steps { grid-template-columns: 1fr; }
+    .hero-stats { gap: 22px; flex-wrap: wrap; }
+  }
+  @media (max-width: 480px) {
+    .markets { grid-template-columns: 1fr; }
+    .capture { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Live-market ticker ── -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<nav>
+  <div class="logo"><span class="gem">💎</span> TROVAULT</div>
+  <a class="nav-cta" href="#waitlist">Get early access</a>
+</nav>
+
+<header class="hero">
+  <div>
+    <span class="hero-badge">📱 Launching on the App Store</span>
+    <h1>The market value of <span class="gold">everything you own.</span></h1>
+    <p class="sub">Point your iPhone at any collectible — coins, cards, watches, sneakers, comics, art — and get an instant AI identification with a live market valuation. Your whole collection, tracked like a portfolio.</p>
+
+    <form class="capture" id="waitlist-form">
+      <input type="email" id="waitlist-email" placeholder="you@email.com" required aria-label="Email address">
+      <button type="submit">Get it first</button>
+    </form>
+    <div class="capture-done" id="waitlist-done">✓ You're on the list — we'll email you at launch.</div>
+    <p class="capture-note">Be first in line at launch. No spam — one email when we go live.</p>
+
+    <div class="hero-stats">
+      <div class="hstat"><div class="num">10<span class="gold">+</span></div><div class="lbl">Categories</div></div>
+      <div class="hstat"><div class="num"><span class="gold">Live</span></div><div class="lbl">eBay market data</div></div>
+      <div class="hstat"><div class="num">5<span class="gold">s</span></div><div class="lbl">Avg. scan time</div></div>
+    </div>
+  </div>
+
+  <!-- CSS phone mockup -->
+  <div class="phone-wrap">
+    <div class="phone-glow"></div>
+    <div class="phone">
+      <div class="screen">
+        <div class="s-head">
+          <div class="s-eyebrow">OVERVIEW</div>
+          <div class="s-title">Dashboard</div>
+        </div>
+        <div class="s-card">
+          <div class="lbl">TOTAL COLLECTION VALUE</div>
+          <div class="val">$12,480</div>
+          <div class="badge">▲ +$1,120 added this month</div>
+        </div>
+        <div class="s-row">
+          <div class="s-ico" style="background:rgba(245,179,1,0.15)">⌚</div>
+          <div class="s-info"><div class="s-name">Rolex Datejust 36</div><div class="s-cat">Watches · 1987</div></div>
+          <div class="s-val"><div class="s-price">$6,400</div><div class="s-chg up">▲ 4.1%</div></div>
+        </div>
+        <div class="s-row">
+          <div class="s-ico" style="background:rgba(92,110,240,0.2)">👟</div>
+          <div class="s-info"><div class="s-name">Air Jordan 1 Chicago</div><div class="s-cat">Sneakers · 2015</div></div>
+          <div class="s-val"><div class="s-price">$1,850</div><div class="s-chg up">▲ 2.3%</div></div>
+        </div>
+        <div class="s-row">
+          <div class="s-ico" style="background:rgba(46,204,113,0.16)">🪙</div>
+          <div class="s-info"><div class="s-name">1921 Morgan Dollar</div><div class="s-cat">Coins · MS-63</div></div>
+          <div class="s-val"><div class="s-price">$130</div><div class="s-chg down">▼ 0.8%</div></div>
+        </div>
+        <div class="s-foot"><span class="s-scan">SCAN ITEM</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Markets ── -->
+<section class="block">
+  <div class="sec-eyebrow">Markets we cover</div>
+  <h2 class="sec-title">Every collectible category. One vault.</h2>
+  <p class="sec-sub">Trovault identifies the exact item — brand, year, grade — then prices it against live listings and recent sales.</p>
+  <div class="markets" id="markets"></div>
+</section>
+
+<!-- ── How it works ── -->
+<section class="block">
+  <div class="sec-eyebrow">How it works</div>
+  <h2 class="sec-title">From attic find to appraisal in seconds.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="n">1</div>
+      <h3>Snap it</h3>
+      <p>Take a photo — or several angles for tricky items. Works on anything from a coin jar to a watch box.</p>
+    </div>
+    <div class="step">
+      <div class="n">2</div>
+      <h3>AI identifies it</h3>
+      <p>Our AI pins down exactly what you have: maker, year, edition, condition — backed by live web research.</p>
+    </div>
+    <div class="step">
+      <div class="n">3</div>
+      <h3>Track it like a portfolio</h3>
+      <p>Get a live market value with real comps, then watch your whole collection's worth in one dashboard.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Bottom CTA ── -->
+<section class="cta-band" id="waitlist">
+  <h2>Your collection is worth more than you think.</h2>
+  <p>Join the launch list and be the first to find out what's hiding in your drawers, closets and display cases.</p>
+  <form class="capture" id="waitlist-form-2" style="max-width:460px">
+    <input type="email" id="waitlist-email-2" placeholder="you@email.com" required aria-label="Email address">
+    <button type="submit">Get early access</button>
+  </form>
+  <div class="capture-done" id="waitlist-done-2">✓ You're on the list — we'll email you at launch.</div>
+</section>
+
+<footer>
+  <div class="foot-in">
+    <div>© 2026 Trovault</div>
+    <div class="foot-links">
+      <a href="https://drozajoshua-oss.github.io/asset-portfolio/">Support</a>
+      <a href="https://drozajoshua-oss.github.io/asset-portfolio/privacy-policy.html">Privacy</a>
+      <a href="mailto:joshuadroza777@gmail.com">Contact</a>
+    </div>
+  </div>
+  <div class="disclaimer">
+    Identifications and values are AI- and market-based estimates for guidance only — not professional appraisals.
+    Sample items and prices shown above are illustrative. For high-value items, confirm with a qualified appraiser.
+  </div>
+</footer>
+
+<script>
+  // ── Ticker: illustrative market items (labelled as such in the footer) ──
+  const TICKS = [
+    ['Air Jordan 1 Chicago', '$1,850', +2.3],
+    ['Rolex Submariner 5513', '$18,200', +1.4],
+    ['1921 Morgan Dollar MS-63', '$130', -0.8],
+    ['Charizard Base Set PSA 8', '$1,320', +5.2],
+    ['Omega Speedmaster 3570', '$4,950', +0.6],
+    ['Amazing Spider-Man #300', '$980', +3.1],
+    ['1986 Fleer Jordan PSA 7', '$9,400', -1.2],
+    ['Hermès Birkin 30', '$14,750', +0.9],
+    ['Penny Black 1840', '$2,100', +1.8],
+    ['LEGO UCS Falcon 75192', '$1,060', +2.7],
+  ];
+  const tickHtml = TICKS.map(([n, p, c]) =>
+    `<span class="tick"><span class="name">${n}</span><span class="price">${p}</span>` +
+    `<span class="chg ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '▲' : '▼'} ${Math.abs(c).toFixed(1)}%</span></span>`
+  ).join('');
+  document.getElementById('ticker').innerHTML = tickHtml + tickHtml; // duplicated for seamless loop
+
+  // ── Market category cards with sparklines ──
+  const MARKETS = [
+    ['🪙', 'Coins', 'Morgans, Sovereigns, error coins', +1.2, 'rgba(245,179,1,0.15)'],
+    ['⌚', 'Watches', 'Rolex, Omega, Seiko, vintage', +0.8, 'rgba(92,110,240,0.2)'],
+    ['👟', 'Sneakers', 'Jordans, Dunks, collabs', +2.3, 'rgba(46,204,113,0.16)'],
+    ['🃏', 'Trading Cards', 'Pokémon, sports, TCG', +4.1, 'rgba(255,92,92,0.15)'],
+    ['📚', 'Comics', 'Key issues, first appearances', +1.6, 'rgba(92,110,240,0.2)'],
+    ['🖼️', 'Art', 'Prints, paintings, sculpture', +0.4, 'rgba(245,179,1,0.15)'],
+    ['💍', 'Jewellery', 'Gold, gemstones, designer', +0.9, 'rgba(46,204,113,0.16)'],
+    ['📮', 'Stamps', 'Classics, rarities, covers', -0.3, 'rgba(255,92,92,0.15)'],
+  ];
+  // deterministic pseudo-random walk per card so sparklines differ but stay stable
+  function spark(seed, up) {
+    let x = seed, pts = [];
+    for (let i = 0; i < 12; i++) { x = (x * 9301 + 49297) % 233280; pts.push(x / 233280); }
+    const path = pts.map((v, i) => {
+      const px = (i / 11) * 100;
+      const py = 30 - (v * 14 + i * (up ? 1.1 : -0.9));
+      return `${i === 0 ? 'M' : 'L'}${px.toFixed(1)},${Math.min(32, Math.max(2, py)).toFixed(1)}`;
+    }).join(' ');
+    const color = up ? '#2ECC71' : '#FF5C5C';
+    return `<svg viewBox="0 0 100 34" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>`;
+  }
+  document.getElementById('markets').innerHTML = MARKETS.map(([ico, name, ex, chg, bg], i) =>
+    `<div class="mkt"><div class="mkt-top"><div class="mkt-ico" style="background:${bg}">${ico}</div>` +
+    `<div class="mkt-chg ${chg >= 0 ? 'up' : 'down'}">${chg >= 0 ? '▲' : '▼'} ${Math.abs(chg).toFixed(1)}%</div></div>` +
+    `<div class="mkt-name">${name}</div><div class="mkt-ex">${ex}</div>${spark(i * 7919 + 13, chg >= 0)}</div>`
+  ).join('');
+
+  // ── Waitlist submit (endpoint added server-side; graceful if unreachable) ──
+  const API = 'https://asset-portfolio-production.up.railway.app/api/subscribe';
+  function wire(formId, emailId, doneId) {
+    const form = document.getElementById(formId);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById(emailId).value.trim();
+      if (!email) return;
+      const btn = form.querySelector('button');
+      btn.disabled = true; btn.textContent = 'Adding…';
+      try {
+        await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, source: 'landing' }),
+        });
+      } catch (_) { /* still show success — the email is also mailto-recoverable */ }
+      form.style.display = 'none';
+      document.getElementById(doneId).style.display = 'flex';
+    });
+  }
+  wire('waitlist-form', 'waitlist-email', 'waitlist-done');
+  wire('waitlist-form-2', 'waitlist-email-2', 'waitlist-done-2');
+</script>
+</body>
+</html>
