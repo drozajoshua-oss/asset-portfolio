@@ -66,6 +66,17 @@ export async function fetchIsPremium() {
 }
 
 /**
+ * Subscribe to entitlement changes (purchase, renewal, expiry, or the SDK's
+ * own fetch finishing after a slow cold start). Returns an unsubscribe fn.
+ */
+export function onPremiumChange(cb) {
+  if (!RC_ENABLED) return () => {};
+  const listener = info => cb(!!info.entitlements.active[ENTITLEMENT_ID]);
+  rc().addCustomerInfoUpdateListener(listener);
+  return () => rc().removeCustomerInfoUpdateListener(listener);
+}
+
+/**
  * Purchase a plan. Returns { ok, reason? }.
  * reason 'not_configured' means billing isn't switched on yet.
  */

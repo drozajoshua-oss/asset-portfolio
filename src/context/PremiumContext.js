@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  initPurchases, fetchIsPremium, purchasePlan, restorePurchases,
+  initPurchases, fetchIsPremium, purchasePlan, restorePurchases, onPremiumChange,
 } from '../services/purchases';
 
 // Free users get this many identifications PER CALENDAR MONTH; the counter
@@ -24,15 +24,23 @@ export function PremiumProvider({ children }) {
 
   useEffect(() => {
     let active = true;
+    let unsubscribe = () => {};
     const withTimeout = (p, ms, fallback) =>
       Promise.race([p, new Promise(res => setTimeout(() => res(fallback), ms))]);
     (async () => {
       try {
         await initPurchases();
+        // Track entitlement changes for the whole session — renewals, expiry,
+        // and the SDK's first fetch landing after the timeout below.
+        unsubscribe = onPremiumChange(premium => {
+          if (active) setIsPremium(premium);
+        });
         // StoreKit can stall for seconds when products aren't available yet —
-        // never let it hold up first paint.
+        // never let it hold up first paint. Only an affirmative result is
+        // applied here; the timeout's false fallback must not clobber a
+        // listener update that already arrived.
         const premium = await withTimeout(fetchIsPremium(), 4000, false);
-        if (active) setIsPremium(premium);
+        if (active && premium) setIsPremium(true);
       } catch (_) {
         // ignore — default to not premium
       }
@@ -48,7 +56,7 @@ export function PremiumProvider({ children }) {
       }
       if (active) setLoading(false);
     })();
-    return () => { active = false; };
+    return () => { active = false; unsubscribe(); };
   }, []);
 
   // Count one identification against this month's free quota.
