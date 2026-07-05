@@ -6,25 +6,29 @@
 <title>Trovault — Know What Your Collection Is Worth</title>
 <meta name="description" content="Scan any collectible with your iPhone and get an instant AI identification and live market value. Coins, cards, watches, sneakers, comics and more.">
 <style>
+  /* Palette mirrors the app: src/constants/colors.js */
   :root {
-    --navy: #0B1026;
-    --navy-2: #111735;
-    --navy-3: #1A2147;
-    --gold: #F5B301;
-    --gold-soft: rgba(245, 179, 1, 0.12);
-    --text: #EEF1FA;
-    --text-sub: #9AA3C0;
-    --text-muted: #6B7494;
-    --green: #2ECC71;
-    --red: #FF5C5C;
+    --bg: #F4F6FC;
+    --surface: #FFFFFF;
+    --surface-tint: #F0F3FE;
+    --border: #E4E8F4;
+    --border-light: #EEF1F8;
     --accent: #5C6EF0;
-    --border: rgba(255, 255, 255, 0.08);
-    --card: rgba(255, 255, 255, 0.04);
+    --accent-dark: #4355C8;
+    --accent-light: #EEF0FE;
+    --text: #1A1F3D;
+    --text-sub: #64748B;
+    --text-muted: #94A3B8;
+    --green: #10B981;
+    --green-light: #D1FAE5;
+    --red: #EF4444;
+    --gold: #F5B301;
+    --card-shadow: 0 2px 12px rgba(92, 110, 240, 0.12);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background: var(--navy);
+    background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -34,7 +38,7 @@
 
   /* ── Ticker tape ── */
   .ticker-wrap {
-    background: var(--navy-2);
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
     overflow: hidden;
     white-space: nowrap;
@@ -59,15 +63,15 @@
   .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 19px; letter-spacing: 0.5px; }
   .logo .gem {
     width: 34px; height: 34px; border-radius: 9px;
-    background: linear-gradient(145deg, #151B3B, #0B1026);
-    border: 1px solid rgba(245, 179, 1, 0.45);
+    background: #131A3F;
+    border: 1px solid rgba(245, 179, 1, 0.55);
     display: grid; place-items: center; font-size: 16px;
   }
   .nav-cta {
-    background: var(--gold); color: #241A00; font-weight: 800; font-size: 14px;
-    padding: 10px 18px; border-radius: 10px; transition: transform 0.15s ease, box-shadow 0.15s ease;
+    background: var(--accent); color: #FFF; font-weight: 800; font-size: 14px;
+    padding: 10px 18px; border-radius: 10px; transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   }
-  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245, 179, 1, 0.35); }
+  .nav-cta:hover { transform: translateY(-1px); background: var(--accent-dark); box-shadow: 0 6px 20px rgba(92, 110, 240, 0.35); }
 
   /* ── Hero ── */
   .hero {
@@ -76,99 +80,104 @@
   }
   .hero-badge {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--gold-soft); border: 1px solid rgba(245, 179, 1, 0.35);
-    color: var(--gold); font-size: 12.5px; font-weight: 700;
+    background: var(--accent-light); border: 1px solid rgba(92, 110, 240, 0.3);
+    color: var(--accent); font-size: 12.5px; font-weight: 700;
     padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
   }
   .hero h1 {
     font-size: clamp(34px, 5vw, 54px); line-height: 1.08; font-weight: 900; letter-spacing: -1.5px;
     margin-bottom: 18px;
   }
-  .hero h1 .gold { color: var(--gold); }
+  .hero h1 .hl { color: var(--accent); }
   .hero p.sub { font-size: 18px; line-height: 1.6; color: var(--text-sub); max-width: 480px; margin-bottom: 30px; }
 
   .capture { display: flex; gap: 10px; max-width: 460px; }
   .capture input {
-    flex: 1; background: var(--navy-2); border: 1px solid var(--border); color: var(--text);
+    flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text);
     border-radius: 12px; padding: 15px 16px; font-size: 15px; outline: none; min-width: 0;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .capture input:focus { border-color: var(--gold); }
+  .capture input::placeholder { color: var(--text-muted); }
+  .capture input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(92, 110, 240, 0.12); }
   .capture button {
-    background: var(--gold); color: #241A00; border: none; cursor: pointer;
+    background: var(--accent); color: #FFF; border: none; cursor: pointer;
     font-weight: 800; font-size: 15px; padding: 15px 22px; border-radius: 12px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease; white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; white-space: nowrap;
   }
-  .capture button:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245, 179, 1, 0.35); }
+  .capture button:hover { transform: translateY(-1px); background: var(--accent-dark); box-shadow: 0 6px 20px rgba(92, 110, 240, 0.35); }
   .capture-note { font-size: 12.5px; color: var(--text-muted); margin-top: 12px; }
-  .capture-done { display: none; align-items: center; gap: 10px; background: rgba(46, 204, 113, 0.1);
-    border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 12px; padding: 15px 18px;
-    color: var(--green); font-weight: 700; font-size: 15px; max-width: 460px; }
+  .capture-done { display: none; align-items: center; gap: 10px; background: var(--green-light);
+    border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 15px 18px;
+    color: #0B7A57; font-weight: 700; font-size: 15px; max-width: 460px; }
 
   .hero-stats { display: flex; gap: 34px; margin-top: 40px; }
   .hstat .num { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
-  .hstat .num .gold { color: var(--gold); }
+  .hstat .num .hl { color: var(--accent); }
   .hstat .lbl { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
 
-  /* ── Phone mock ── */
+  /* ── Phone mock — mirrors the app's Dashboard ── */
   .phone-wrap { display: flex; justify-content: center; position: relative; }
   .phone-glow {
     position: absolute; width: 420px; height: 420px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(245,179,1,0.14) 0%, rgba(92,110,240,0.1) 45%, transparent 70%);
+    background: radial-gradient(circle, rgba(92,110,240,0.16) 0%, rgba(92,110,240,0.06) 45%, transparent 70%);
     top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
   }
   .phone {
-    width: 300px; border-radius: 42px; background: #05070F;
-    border: 1px solid rgba(255,255,255,0.14);
-    box-shadow: 0 40px 90px rgba(0,0,0,0.55), inset 0 0 0 8px #05070F;
+    width: 300px; border-radius: 42px; background: #0D1230;
+    border: 1px solid rgba(13, 18, 48, 0.25);
+    box-shadow: 0 40px 90px rgba(26, 31, 61, 0.35), inset 0 0 0 8px #0D1230;
     padding: 14px; position: relative; z-index: 1;
   }
-  .screen { border-radius: 30px; background: linear-gradient(180deg, #10163A 0%, #0B1026 100%); overflow: hidden; }
+  .screen { border-radius: 30px; background: var(--bg); overflow: hidden; }
   .s-head { padding: 20px 18px 12px; }
   .s-eyebrow { font-size: 9px; letter-spacing: 1.4px; color: var(--text-muted); font-weight: 800; }
-  .s-title { font-size: 17px; font-weight: 900; margin-top: 2px; }
+  .s-title { font-size: 17px; font-weight: 900; margin-top: 2px; color: var(--text); }
   .s-card {
     margin: 6px 14px 12px; border-radius: 16px; padding: 16px;
     background: linear-gradient(135deg, #5C6EF0 0%, #4353C9 100%);
+    box-shadow: 0 8px 20px rgba(92, 110, 240, 0.3);
   }
   .s-card .lbl { font-size: 8.5px; letter-spacing: 1.3px; font-weight: 800; color: rgba(255,255,255,0.75); }
-  .s-card .val { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-top: 3px; }
+  .s-card .val { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-top: 3px; color: #FFF; }
   .s-card .badge {
     display: inline-flex; align-items: center; gap: 4px; margin-top: 10px;
-    background: rgba(255,255,255,0.18); border-radius: 6px; padding: 4px 8px;
-    font-size: 9.5px; font-weight: 800; color: #B8F5CF;
+    background: rgba(255,255,255,0.2); border-radius: 6px; padding: 4px 8px;
+    font-size: 9.5px; font-weight: 800; color: #D9FBE9;
   }
   .s-row {
     display: flex; align-items: center; gap: 10px;
     margin: 0 14px 10px; padding: 11px 12px; border-radius: 13px;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
+    background: var(--surface); border: 1px solid var(--border-light);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   }
   .s-ico { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 15px; flex-shrink: 0; }
   .s-info { flex: 1; min-width: 0; }
-  .s-name { font-size: 11.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .s-name { font-size: 11.5px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .s-cat { font-size: 9px; color: var(--text-muted); font-weight: 600; margin-top: 1px; }
   .s-val { text-align: right; }
-  .s-price { font-size: 12px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .s-price { font-size: 12px; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
   .s-chg { font-size: 9px; font-weight: 800; }
   .s-foot { padding: 6px 0 18px; text-align: center; }
   .s-scan {
-    display: inline-block; background: var(--gold); color: #241A00;
+    display: inline-block; background: var(--accent); color: #FFF;
     font-size: 11px; font-weight: 900; padding: 10px 26px; border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(92, 110, 240, 0.35);
   }
 
   /* ── Section scaffolding ── */
   section.block { max-width: 1120px; margin: 0 auto; padding: 64px 24px; }
-  .sec-eyebrow { font-size: 12px; letter-spacing: 1.6px; color: var(--gold); font-weight: 800; text-transform: uppercase; }
+  .sec-eyebrow { font-size: 12px; letter-spacing: 1.6px; color: var(--accent); font-weight: 800; text-transform: uppercase; }
   .sec-title { font-size: clamp(26px, 3.4vw, 36px); font-weight: 900; letter-spacing: -0.8px; margin-top: 8px; }
   .sec-sub { color: var(--text-sub); font-size: 16px; margin-top: 10px; max-width: 560px; line-height: 1.55; }
 
   /* ── Markets grid ── */
   .markets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 34px; }
   .mkt {
-    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .mkt:hover { transform: translateY(-3px); border-color: rgba(245, 179, 1, 0.4); }
+  .mkt:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(92, 110, 240, 0.2); }
   .mkt-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .mkt-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 17px; }
   .mkt-chg { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -178,10 +187,10 @@
 
   /* ── How it works ── */
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 34px; }
-  .step { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--card-shadow); }
   .step .n {
-    width: 34px; height: 34px; border-radius: 10px; background: var(--gold-soft);
-    border: 1px solid rgba(245, 179, 1, 0.35); color: var(--gold);
+    width: 34px; height: 34px; border-radius: 10px; background: var(--accent-light);
+    border: 1px solid rgba(92, 110, 240, 0.3); color: var(--accent);
     display: grid; place-items: center; font-weight: 900; font-size: 15px; margin-bottom: 16px;
   }
   .step h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
@@ -190,19 +199,24 @@
   /* ── Bottom CTA ── */
   .cta-band {
     max-width: 1120px; margin: 0 auto 72px; padding: 52px 32px; text-align: center;
-    background: linear-gradient(135deg, var(--navy-3) 0%, var(--navy-2) 100%);
-    border: 1px solid var(--border); border-radius: 24px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #5C6EF0 0%, #4353C9 100%);
+    border-radius: 24px; position: relative; overflow: hidden;
+    box-shadow: 0 16px 40px rgba(92, 110, 240, 0.3);
   }
   .cta-band::before {
     content: ""; position: absolute; width: 520px; height: 520px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(245,179,1,0.1) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, transparent 65%);
     top: -260px; left: 50%; transform: translateX(-50%); pointer-events: none;
   }
-  .cta-band h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 900; letter-spacing: -0.8px; }
-  .cta-band p { color: var(--text-sub); margin: 12px auto 28px; max-width: 460px; font-size: 16px; line-height: 1.55; }
-  .cta-band .capture, .cta-band .capture-done { margin: 0 auto; }
+  .cta-band h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 900; letter-spacing: -0.8px; color: #FFF; position: relative; }
+  .cta-band p { color: rgba(255,255,255,0.85); margin: 12px auto 28px; max-width: 460px; font-size: 16px; line-height: 1.55; position: relative; }
+  .cta-band .capture, .cta-band .capture-done { margin: 0 auto; position: relative; }
+  .cta-band .capture input { border-color: transparent; }
+  .cta-band .capture button { background: var(--gold); color: #241A00; }
+  .cta-band .capture button:hover { background: #E0A400; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25); }
+  .cta-band .capture-done { background: rgba(255,255,255,0.95); }
 
-  footer { border-top: 1px solid var(--border); }
+  footer { border-top: 1px solid var(--border); background: var(--surface); }
   .foot-in {
     max-width: 1120px; margin: 0 auto; padding: 28px 24px;
     display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
@@ -214,7 +228,9 @@
   .disclaimer {
     max-width: 1120px; margin: 0 auto; padding: 0 24px 26px;
     font-size: 11.5px; color: var(--text-muted); line-height: 1.6;
+    background: var(--surface);
   }
+  .disclaimer-wrap { background: var(--surface); }
 
   @media (max-width: 860px) {
     .hero { grid-template-columns: 1fr; padding-top: 36px; gap: 40px; }
@@ -244,7 +260,7 @@
 <header class="hero">
   <div>
     <span class="hero-badge">📱 Launching on the App Store</span>
-    <h1>The market value of <span class="gold">everything you own.</span></h1>
+    <h1>The market value of <span class="hl">everything you own.</span></h1>
     <p class="sub">Point your iPhone at any collectible — coins, cards, watches, sneakers, comics, art — and get an instant AI identification with a live market valuation. Your whole collection, tracked like a portfolio.</p>
 
     <form class="capture" id="waitlist-form">
@@ -255,13 +271,13 @@
     <p class="capture-note">Be first in line at launch. No spam — one email when we go live.</p>
 
     <div class="hero-stats">
-      <div class="hstat"><div class="num">10<span class="gold">+</span></div><div class="lbl">Categories</div></div>
-      <div class="hstat"><div class="num"><span class="gold">Live</span></div><div class="lbl">eBay market data</div></div>
-      <div class="hstat"><div class="num">5<span class="gold">s</span></div><div class="lbl">Avg. scan time</div></div>
+      <div class="hstat"><div class="num">10<span class="hl">+</span></div><div class="lbl">Categories</div></div>
+      <div class="hstat"><div class="num"><span class="hl">Live</span></div><div class="lbl">eBay market data</div></div>
+      <div class="hstat"><div class="num">5<span class="hl">s</span></div><div class="lbl">Avg. scan time</div></div>
     </div>
   </div>
 
-  <!-- CSS phone mockup -->
+  <!-- CSS phone mockup — matches the app's light Dashboard -->
   <div class="phone-wrap">
     <div class="phone-glow"></div>
     <div class="phone">
@@ -276,17 +292,17 @@
           <div class="badge">▲ +$1,120 added this month</div>
         </div>
         <div class="s-row">
-          <div class="s-ico" style="background:rgba(245,179,1,0.15)">⌚</div>
+          <div class="s-ico" style="background:#FEF3C7">⌚</div>
           <div class="s-info"><div class="s-name">Rolex Datejust 36</div><div class="s-cat">Watches · 1987</div></div>
           <div class="s-val"><div class="s-price">$6,400</div><div class="s-chg up">▲ 4.1%</div></div>
         </div>
         <div class="s-row">
-          <div class="s-ico" style="background:rgba(92,110,240,0.2)">👟</div>
+          <div class="s-ico" style="background:#EEF0FE">👟</div>
           <div class="s-info"><div class="s-name">Air Jordan 1 Chicago</div><div class="s-cat">Sneakers · 2015</div></div>
           <div class="s-val"><div class="s-price">$1,850</div><div class="s-chg up">▲ 2.3%</div></div>
         </div>
         <div class="s-row">
-          <div class="s-ico" style="background:rgba(46,204,113,0.16)">🪙</div>
+          <div class="s-ico" style="background:#D1FAE5">🪙</div>
           <div class="s-info"><div class="s-name">1921 Morgan Dollar</div><div class="s-cat">Coins · MS-63</div></div>
           <div class="s-val"><div class="s-price">$130</div><div class="s-chg down">▼ 0.8%</div></div>
         </div>
@@ -373,16 +389,16 @@
   ).join('');
   document.getElementById('ticker').innerHTML = tickHtml + tickHtml; // duplicated for seamless loop
 
-  // ── Market category cards with sparklines ──
+  // ── Market category cards with sparklines (icon halos use the app's *Light tints) ──
   const MARKETS = [
-    ['🪙', 'Coins', 'Morgans, Sovereigns, error coins', +1.2, 'rgba(245,179,1,0.15)'],
-    ['⌚', 'Watches', 'Rolex, Omega, Seiko, vintage', +0.8, 'rgba(92,110,240,0.2)'],
-    ['👟', 'Sneakers', 'Jordans, Dunks, collabs', +2.3, 'rgba(46,204,113,0.16)'],
-    ['🃏', 'Trading Cards', 'Pokémon, sports, TCG', +4.1, 'rgba(255,92,92,0.15)'],
-    ['📚', 'Comics', 'Key issues, first appearances', +1.6, 'rgba(92,110,240,0.2)'],
-    ['🖼️', 'Art', 'Prints, paintings, sculpture', +0.4, 'rgba(245,179,1,0.15)'],
-    ['💍', 'Jewellery', 'Gold, gemstones, designer', +0.9, 'rgba(46,204,113,0.16)'],
-    ['📮', 'Stamps', 'Classics, rarities, covers', -0.3, 'rgba(255,92,92,0.15)'],
+    ['🪙', 'Coins', 'Morgans, Sovereigns, error coins', +1.2, '#FEF3C7'],
+    ['⌚', 'Watches', 'Rolex, Omega, Seiko, vintage', +0.8, '#EEF0FE'],
+    ['👟', 'Sneakers', 'Jordans, Dunks, collabs', +2.3, '#D1FAE5'],
+    ['🃏', 'Trading Cards', 'Pokémon, sports, TCG', +4.1, '#FEE2E2'],
+    ['📚', 'Comics', 'Key issues, first appearances', +1.6, '#EDE9FE'],
+    ['🖼️', 'Art', 'Prints, paintings, sculpture', +0.4, '#FEF3C7'],
+    ['💍', 'Jewellery', 'Gold, gemstones, designer', +0.9, '#D1FAE5'],
+    ['📮', 'Stamps', 'Classics, rarities, covers', -0.3, '#FEE2E2'],
   ];
   // deterministic pseudo-random walk per card so sparklines differ but stay stable
   function spark(seed, up) {
@@ -393,7 +409,7 @@
       const py = 30 - (v * 14 + i * (up ? 1.1 : -0.9));
       return `${i === 0 ? 'M' : 'L'}${px.toFixed(1)},${Math.min(32, Math.max(2, py)).toFixed(1)}`;
     }).join(' ');
-    const color = up ? '#2ECC71' : '#FF5C5C';
+    const color = up ? '#10B981' : '#EF4444';
     return `<svg viewBox="0 0 100 34" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>`;
   }
   document.getElementById('markets').innerHTML = MARKETS.map(([ico, name, ex, chg, bg], i) =>
@@ -402,7 +418,7 @@
     `<div class="mkt-name">${name}</div><div class="mkt-ex">${ex}</div>${spark(i * 7919 + 13, chg >= 0)}</div>`
   ).join('');
 
-  // ── Waitlist submit (endpoint added server-side; graceful if unreachable) ──
+  // ── Waitlist submit (Railway endpoint; graceful if unreachable) ──
   const API = 'https://asset-portfolio-production.up.railway.app/api/subscribe';
   function wire(formId, emailId, doneId) {
     const form = document.getElementById(formId);
