@@ -20,6 +20,7 @@ function mapRowToCoin(row) {
     coinColor: row.coin_color ?? '#C0C0C0',
     symbolChar: row.symbol_char ?? '?',
     photoUrls: row.photo_urls ?? [],
+    createdAt: row.created_at ?? null,
   };
 }
 

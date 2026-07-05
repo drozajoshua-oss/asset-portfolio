@@ -70,6 +70,16 @@ export default function DashboardScreen() {
   const countries  = [...new Set(filtered.map(c => c.country))].length;
   const avgValue   = filtered.length > 0 ? Math.round(totalValue / filtered.length) : 0;
   const topCoins   = [...filtered].sort((a, b) => b.value - a.value).slice(0, 5);
+  // Value of items added since the 1st — real data (from created_at), unlike
+  // market appreciation, which would need historical price snapshots.
+  const addedThisMonth = (() => {
+    const now = new Date();
+    return filtered.reduce((s, c) => {
+      const d = c.createdAt ? new Date(c.createdAt) : null;
+      return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+        ? s + c.value : s;
+    }, 0);
+  })();
   const chartData  = (() => {
     const groups = {};
     filtered.forEach(c => {
@@ -108,10 +118,14 @@ export default function DashboardScreen() {
           <Text style={ds.heroValue}>${totalValue.toLocaleString()}</Text>
 
           <View style={ds.heroRow}>
-            <View style={ds.heroBadge}>
-              <Ionicons name="trending-up" size={12} color={C.success} />
-              <Text style={ds.heroBadgeText}>+12.4% this month</Text>
-            </View>
+            {addedThisMonth > 0 ? (
+              <View style={ds.heroBadge}>
+                <Ionicons name="trending-up" size={12} color={C.success} />
+                <Text style={ds.heroBadgeText}>+${addedThisMonth.toLocaleString()} added this month</Text>
+              </View>
+            ) : (
+              <View />
+            )}
             <Text style={ds.heroDate}>{month}</Text>
           </View>
 
