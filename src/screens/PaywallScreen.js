@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   Modal, Alert, ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { usePremium } from '../context/PremiumContext';
@@ -43,6 +43,7 @@ export default function PaywallScreen({ visible, onClose }) {
   const [selected, setSelected] = useState('annual');
   const [busy, setBusy] = useState(false);
   const { purchase, restore } = usePremium();
+  const insets = useSafeAreaInsets();
 
   async function handlePurchase() {
     setBusy(true);
@@ -80,7 +81,9 @@ export default function PaywallScreen({ visible, onClose }) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <SafeAreaView style={pw.root} edges={['top', 'bottom']}>
+      {/* Native SafeAreaView measures zero insets inside iOS Modals — pad a
+          plain View with the root provider's insets instead. */}
+      <View style={[pw.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <IconBackdrop tint={GOLD} opacity={0.05} />
         {/* Close */}
         <View style={pw.topBar}>
@@ -172,7 +175,7 @@ export default function PaywallScreen({ visible, onClose }) {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

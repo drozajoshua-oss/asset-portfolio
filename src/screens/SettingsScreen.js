@@ -4,7 +4,7 @@ import {
   Modal, Alert, Linking, ActivityIndicator, TextInput,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { useAuth } from '../context/AuthContext';
@@ -112,9 +112,13 @@ export default function SettingsScreen({ visible, onClose }) {
     Linking.openURL(url).catch(() => Alert.alert('Unable to open link'));
   }
 
+  const insets = useSafeAreaInsets();
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={set.root} edges={['top', 'bottom']}>
+      {/* Native SafeAreaView measures zero insets inside iOS Modals — pad a
+          plain View with the root provider's insets instead. */}
+      <View style={[set.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         {/* Header */}
         <View style={set.header}>
           <Text style={set.title}>Settings</Text>
@@ -224,7 +228,7 @@ export default function SettingsScreen({ visible, onClose }) {
             </View>
           </KeyboardAvoidingView>
         </Modal>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
