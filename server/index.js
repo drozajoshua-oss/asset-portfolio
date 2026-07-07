@@ -307,6 +307,8 @@ app.get('/api/ticker', async (req, res) => {
           label: t.label,
           price: comps.median,
           change: prev ? Number((((comps.median - prev) / prev) * 100).toFixed(1)) : null,
+          // TODO post-launch: swap to eBay Partner Network affiliate links.
+          url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(t.q)}`,
         });
       } catch (_) { /* skip items eBay chokes on — ticker degrades gracefully */ }
     }

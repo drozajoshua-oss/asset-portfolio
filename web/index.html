@@ -64,6 +64,7 @@
   .ticker-wrap:hover .ticker { animation-play-state: paused; }
   @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
   .tick { display: inline-flex; align-items: center; gap: 7px; margin: 0 22px; }
+  .tick:hover .name { color: var(--accent); }
   .tick .name { color: var(--text-sub); font-weight: 600; }
   .tick .price { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
   .tick .chg { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -406,18 +407,21 @@
     ['LEGO UCS Falcon 75192', 1060, 2.7],
   ];
   function renderTicker(rows) {
-    const html = rows.map(([n, p, c]) =>
-      `<span class="tick"><span class="name">${n}</span><span class="price">$${Number(p).toLocaleString()}</span>` +
-      (c == null ? '' :
-        `<span class="chg ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '▲' : '▼'} ${Math.abs(c).toFixed(1)}%</span>`)
-    ).join('');
+    const html = rows.map(([n, p, c, u]) => {
+      const href = u || `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(n)}`;
+      return `<a class="tick" href="${href}" target="_blank" rel="noopener">` +
+        `<span class="name">${n}</span><span class="price">$${Number(p).toLocaleString()}</span>` +
+        (c == null ? '' :
+          `<span class="chg ${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '▲' : '▼'} ${Math.abs(c).toFixed(1)}%</span>`) +
+        `</a>`;
+    }).join('');
     document.getElementById('ticker').innerHTML = html + html; // duplicated for seamless loop
   }
   renderTicker(FALLBACK_TICKS);
   fetch('https://asset-portfolio-production.up.railway.app/api/ticker')
     .then(r => (r.ok ? r.json() : null))
     .then(d => {
-      if (d?.items?.length >= 5) renderTicker(d.items.map(i => [i.label, i.price, i.change]));
+      if (d?.items?.length >= 5) renderTicker(d.items.map(i => [i.label, i.price, i.change, i.url]));
     })
     .catch(() => {});
 
