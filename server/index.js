@@ -271,8 +271,19 @@ function sendWaitlistConfirmation(email) {
       from: process.env.WAITLIST_FROM || 'Trovault <hello@trovault.io>',
       reply_to: 'joshuadroza777@gmail.com',
       to: email,
-      subject: 'You’re on the list \u{1F48E}',
+      subject: 'You’re on the list',
       html,
+      text: `You're on the list.
+
+Thanks for signing up — you'll be one of the first to know the moment Trovault hits the App Store. It's days away.
+
+While you wait, pick your five most mysterious items — the watch in the drawer, the coins in the jar, the sneakers in the box. When the app lands, you'll point your iPhone at each one and find out what it's actually worth. Your first 5 scans every month are free.
+
+One more email from us — the download link on launch day. That's it.
+
+https://trovault.io
+
+You're receiving this because you joined the launch list at trovault.io. Not you? Just ignore this email — we won't write again except on launch day.`,
     }),
   }).catch(() => {});
 }
