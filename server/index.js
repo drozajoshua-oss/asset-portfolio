@@ -217,6 +217,66 @@ app.post('/api/delete-account', async (req, res) => {
   }
 });
 
+// Waitlist confirmation email, fired via Resend right after a NEW signup
+// (never on duplicates). Fire-and-forget: a mail failure must never break
+// the signup response. Silently skipped until RESEND_API_KEY is set.
+function sendWaitlistConfirmation(email) {
+  const KEY = process.env.RESEND_API_KEY;
+  if (!KEY) return;
+  const html = `<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#f2f5fb;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f5fb;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;">
+        <tr><td style="background:linear-gradient(135deg,#4fb8fe,#2557e8);padding:40px 32px;text-align:center;">
+          <div style="display:inline-block;width:64px;height:64px;line-height:64px;border-radius:50%;border:4px solid #ffffff;color:#ffffff;font-size:34px;font-weight:800;text-align:center;">T</div>
+          <div style="color:#ffffff;font-size:24px;font-weight:800;letter-spacing:4px;margin-top:14px;">TROVAULT</div>
+        </td></tr>
+        <tr><td style="padding:36px 32px 8px;">
+          <h1 style="margin:0 0 16px;font-size:26px;line-height:1.25;color:#101733;">You&rsquo;re on the list. &#128142;</h1>
+          <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#3c4563;">
+            Thanks for signing up &mdash; you&rsquo;ll be one of the first to know the moment
+            <strong>Trovault</strong> hits the App Store. It&rsquo;s days away.
+          </p>
+          <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#3c4563;">
+            While you wait, pick your five most mysterious items &mdash; the watch in the drawer,
+            the coins in the jar, the sneakers in the box. When the app lands, you&rsquo;ll
+            point your iPhone at each one and find out what it&rsquo;s actually worth.
+            <strong>Your first 5 scans every month are free.</strong>
+          </p>
+          <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#3c4563;">
+            One more email from us &mdash; the download link on launch day. That&rsquo;s it.
+          </p>
+        </td></tr>
+        <tr><td align="center" style="padding:0 32px 36px;">
+          <a href="https://trovault.io" style="display:inline-block;background:#2f6bff;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 36px;border-radius:10px;">Visit trovault.io</a>
+        </td></tr>
+        <tr><td style="padding:24px 32px;background:#f7f9fd;border-top:1px solid #e8edf7;">
+          <p style="margin:0;font-size:12px;line-height:1.6;color:#8a94b3;text-align:center;">
+            You&rsquo;re receiving this because you joined the launch list at trovault.io.<br>
+            Not you? Just ignore this email &mdash; we won&rsquo;t write again except on launch day.<br>
+            Trovault &middot; <a href="https://trovault.io" style="color:#8a94b3;">trovault.io</a>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: process.env.WAITLIST_FROM || 'Trovault <hello@trovault.io>',
+      reply_to: 'joshuadroza777@gmail.com',
+      to: email,
+      subject: 'You’re on the list \u{1F48E}',
+      html,
+    }),
+  }).catch(() => {});
+}
+
 // Landing-page waitlist signup. Stores the email in the Supabase `waitlist`
 // table via the service role (same env vars as delete-account). Duplicate
 // emails are treated as success so the form never scolds a returning visitor.
@@ -248,6 +308,7 @@ app.post('/api/subscribe', async (req, res) => {
       const e = await ins.json().catch(() => ({}));
       return res.status(502).json({ error: e.message || 'Could not save your email.' });
     }
+    if (ins.ok) sendWaitlistConfirmation(email);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
