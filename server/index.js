@@ -277,39 +277,6 @@ function sendWaitlistConfirmation(email) {
   }).catch(() => {});
 }
 
-// One-time backfill: sends the confirmation email to EVERY address already
-// in the waitlist (rows that signed up before the email existed). Guarded by
-// ADMIN_TOKEN so only the owner can trigger it; throttled for Resend's rate
-// limit. Safe to remove after launch.
-app.post('/api/admin/backfill-waitlist', async (req, res) => {
-  const TOKEN = process.env.ADMIN_TOKEN;
-  if (!TOKEN || req.get('x-admin-token') !== TOKEN) {
-    return res.status(401).json({ error: 'Unauthorized.' });
-  }
-  const SUPA_URL     = process.env.SUPABASE_URL;
-  const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!SUPA_URL || !SERVICE_ROLE) return res.status(500).json({ error: 'Supabase not configured.' });
-  if (!process.env.RESEND_API_KEY) return res.status(500).json({ error: 'RESEND_API_KEY not set.' });
-
-  try {
-    const rows = await fetch(`${SUPA_URL}/rest/v1/waitlist?select=email&order=created_at`, {
-      headers: { Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
-    }).then(r => r.json());
-    if (!Array.isArray(rows)) return res.status(502).json({ error: 'Could not read waitlist.' });
-
-    let sent = 0;
-    const failed = [];
-    for (const { email } of rows) {
-      const r = await sendWaitlistConfirmation(email);
-      if (r && r.ok) sent++; else failed.push(email);
-      await new Promise(t => setTimeout(t, 600));
-    }
-    res.json({ total: rows.length, sent, failed });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Landing-page waitlist signup. Stores the email in the Supabase `waitlist`
 // table via the service role (same env vars as delete-account). Duplicate
 // emails are treated as success so the form never scolds a returning visitor.
