@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Modal, Alert, ActivityIndicator,
+  Modal, Alert, ActivityIndicator, Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,11 @@ import { usePremium } from '../context/PremiumContext';
 import IconBackdrop from '../components/IconBackdrop';
 
 const GOLD = '#F5B301';
+
+// App Review (guideline 3.1.2) requires functional Terms of Use and Privacy
+// Policy links inside the purchase flow itself.
+const TERMS_URL   = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+const PRIVACY_URL = 'https://drozajoshua-oss.github.io/asset-portfolio/privacy-policy.html';
 
 const FEATURES = [
   { icon: 'infinite',         title: 'Unlimited scans',         body: 'Identify as many items as you want — no monthly cap.' },
@@ -173,6 +178,15 @@ export default function PaywallScreen({ visible, onClose }) {
             <TouchableOpacity onPress={handleRestore} disabled={busy} hitSlop={8} activeOpacity={0.7}>
               <Text style={pw.restore}>Restore purchases</Text>
             </TouchableOpacity>
+            <View style={pw.legalRow}>
+              <TouchableOpacity onPress={() => Linking.openURL(TERMS_URL)} hitSlop={8} activeOpacity={0.7}>
+                <Text style={pw.legalLink}>Terms of Use (EULA)</Text>
+              </TouchableOpacity>
+              <Text style={pw.legalDot}>·</Text>
+              <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_URL)} hitSlop={8} activeOpacity={0.7}>
+                <Text style={pw.legalLink}>Privacy Policy</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -252,4 +266,10 @@ const pw = StyleSheet.create({
   ctaText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
   ctaSub: { fontSize: 12, color: C.textMuted, textAlign: 'center', marginTop: 10 },
   restore: { fontSize: 13, fontWeight: '700', color: C.accent, textAlign: 'center', marginTop: 12 },
+  legalRow: {
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    gap: 8, marginTop: 14,
+  },
+  legalLink: { fontSize: 11.5, color: C.textMuted, textDecorationLine: 'underline' },
+  legalDot: { fontSize: 11.5, color: C.textMuted },
 });
