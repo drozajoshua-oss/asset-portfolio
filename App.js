@@ -44,6 +44,7 @@ function MainTabs() {
   return (
     <NavigationContainer>
       <Tab.Navigator
+        initialRouteName="Dashboard"
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ focused, color, size }) => (

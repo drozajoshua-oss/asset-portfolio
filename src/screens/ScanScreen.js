@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import * as ImagePicker from 'expo-image-picker';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { identifyAsset } from '../services/gemini';
@@ -244,7 +245,9 @@ export default function ScanScreen() {
   // in an eBay Partner Network (EPN) rover link with your campaign id.
   function openEbay(query) {
     const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`;
-    Linking.openURL(url).catch(() => {});
+    // In-app browser sheet (has a Done button back to the app); Safari-jump
+    // via Linking stranded users with no visible way back.
+    WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url).catch(() => {}));
   }
 
   return (

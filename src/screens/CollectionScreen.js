@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { useCollection } from '../context/CollectionContext';
 import { CATEGORIES } from '../data/items';
@@ -253,7 +254,8 @@ export default function CollectionScreen() {
   function openEbay(coin) {
     const q = encodeURIComponent(`${coin.name} ${coin.year || ''}`.trim());
     // Affiliate-ready: swap to an EPN rover URL later.
-    Linking.openURL(`https://www.ebay.com/sch/i.html?_nkw=${q}`);
+    WebBrowser.openBrowserAsync(`https://www.ebay.com/sch/i.html?_nkw=${q}`)
+      .catch(() => Linking.openURL(`https://www.ebay.com/sch/i.html?_nkw=${q}`).catch(() => {}));
   }
 
   function confirmDelete(coin) {

@@ -56,7 +56,7 @@ function TopRow({ coin, rank, maxValue }) {
   );
 }
 
-export default function DashboardScreen() {
+export default function DashboardScreen({ navigation }) {
   const { coins } = useCollection();
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -146,6 +146,18 @@ export default function DashboardScreen() {
               <Text style={ds.heroStatLbl}>Avg. Value</Text>
             </View>
           </View>
+
+          {/* Dashboard is the home tab — scanning stays one tap away. */}
+          <TouchableOpacity
+            style={ds.heroScanBtn}
+            onPress={() => navigation.navigate('Scan')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="scan" size={17} color={C.accent} />
+            <Text style={ds.heroScanText}>
+              {coins.length === 0 ? 'Scan your first item' : 'Scan an item'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* ── Go Premium banner ── */}
@@ -295,6 +307,12 @@ const ds = StyleSheet.create({
     marginBottom: 14,
     overflow: 'hidden',
   },
+  heroScanBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: '#FFFFFF', borderRadius: 13,
+    paddingVertical: 13, marginTop: 16,
+  },
+  heroScanText: { fontSize: 14.5, fontWeight: '800', color: C.accent },
   heroDeco: {
     position: 'absolute', top: -40, right: -40,
     width: 160, height: 160, borderRadius: 80,
