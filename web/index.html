@@ -121,6 +121,15 @@
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; white-space: nowrap;
   }
   .capture button:hover { transform: translateY(-1px); background: var(--accent-dark); box-shadow: 0 6px 20px rgba(92, 110, 240, 0.35); }
+  .dl-btn {
+    display:inline-flex; align-items:center; gap:10px;
+    background:#101733; color:#fff; text-decoration:none;
+    font-weight:800; font-size:17px; padding:16px 34px; border-radius:14px;
+    margin-top:6px; transition:transform .15s ease, box-shadow .15s ease;
+    box-shadow:0 10px 30px rgba(16,23,51,.25);
+  }
+  .dl-btn:hover { transform:translateY(-2px); box-shadow:0 14px 36px rgba(16,23,51,.32); }
+  .dl-btn-invert { background:#fff; color:#101733; box-shadow:0 10px 30px rgba(0,0,0,.18); }
   .capture-note { font-size: 12.5px; color: var(--text-muted); margin-top: 12px; }
   .capture-done { display: none; align-items: center; gap: 10px; background: var(--green-light);
     border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 15px 18px;
@@ -275,21 +284,17 @@
 
 <nav>
   <div class="logo"><span class="gem">💎</span> TROVAULT</div>
-  <a class="nav-cta" href="#waitlist">Get early access</a>
+  <a class="nav-cta" href="https://apps.apple.com/app/id6786001252">Download</a>
 </nav>
 
 <header class="hero">
   <div>
-    <span class="hero-badge">📱 Launching on the App Store</span>
+    <span class="hero-badge">🎉 Now on the App Store</span>
     <h1>The market value of <span class="hl">everything you own.</span></h1>
     <p class="sub">Point your iPhone at any collectible — coins, cards, watches, sneakers, comics, art — and we identify it instantly with a live market valuation. Your whole collection, tracked like a portfolio.</p>
 
-    <form class="capture" id="waitlist-form">
-      <input type="email" id="waitlist-email" placeholder="you@email.com" required aria-label="Email address">
-      <button type="submit">Get it first</button>
-    </form>
-    <div class="capture-done" id="waitlist-done">✓ You're on the list — we'll email you at launch.</div>
-    <p class="capture-note">Be first in line at launch. No spam — one email when we go live.</p>
+    <a class="dl-btn" href="https://apps.apple.com/app/id6786001252">&#63743; Download on the App Store</a>
+    <p class="capture-note">Free download · 5 free scans every month · iPhone</p>
 
     <div class="hero-stats">
       <div class="hstat"><div class="num">10<span class="hl">+</span></div><div class="lbl">Categories</div></div>
@@ -367,12 +372,8 @@
 <!-- ── Bottom CTA ── -->
 <section class="cta-band" id="waitlist">
   <h2>Your collection is worth more than you think.</h2>
-  <p>Join the launch list and be the first to find out what's hiding in your drawers, closets and display cases.</p>
-  <form class="capture" id="waitlist-form-2" style="max-width:460px">
-    <input type="email" id="waitlist-email-2" placeholder="you@email.com" required aria-label="Email address">
-    <button type="submit">Get early access</button>
-  </form>
-  <div class="capture-done" id="waitlist-done-2">✓ You're on the list — we'll email you at launch.</div>
+  <p>Find out what's hiding in your drawers, closets and display cases — free on the App Store.</p>
+  <a class="dl-btn dl-btn-invert" href="https://apps.apple.com/app/id6786001252">&#63743; Download Trovault</a>
 </section>
 
 <footer>
