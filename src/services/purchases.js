@@ -38,6 +38,7 @@ const RC_ENABLED = REVENUECAT_ENABLED && Platform.OS !== 'web';
 export const PLAN_PACKAGES = {
   annual: '$rc_annual',
   monthly: '$rc_monthly',
+  lifetime: '$rc_lifetime',
 };
 
 // Lazily required so the native module is never touched while disabled.
@@ -74,6 +75,29 @@ export function onPremiumChange(cb) {
   const listener = info => cb(!!info.entitlements.active[ENTITLEMENT_ID]);
   rc().addCustomerInfoUpdateListener(listener);
   return () => rc().removeCustomerInfoUpdateListener(listener);
+}
+
+/**
+ * Which plans the current offering actually contains, with localized prices.
+ * The paywall renders a plan only if its package exists in RevenueCat, so
+ * store config can trail the binary without shipping dead buttons — and
+ * localized priceStrings replace the hardcoded USD fallbacks when available.
+ * Returns e.g. { annual: '$39.99', monthly: '$4.99', lifetime: '$99.99' }.
+ */
+export async function fetchAvailablePlans() {
+  if (!RC_ENABLED) return {};
+  try {
+    const offerings = await rc().getOfferings();
+    const pkgs = offerings.current?.availablePackages ?? [];
+    const out = {};
+    for (const [planId, pkgId] of Object.entries(PLAN_PACKAGES)) {
+      const pkg = pkgs.find(p => p.identifier === pkgId);
+      if (pkg) out[planId] = pkg.product?.priceString ?? null;
+    }
+    return out;
+  } catch {
+    return {};
+  }
 }
 
 /**

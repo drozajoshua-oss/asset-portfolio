@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Modal, Alert, ActivityIndicator, Linking,
+  Modal, Alert, ActivityIndicator, Linking, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/colors';
 import { usePremium } from '../context/PremiumContext';
+import { fetchAvailablePlans } from '../services/purchases';
 import IconBackdrop from '../components/IconBackdrop';
 
 const GOLD = '#F5B301';
@@ -44,11 +45,35 @@ const PLANS = [
   },
 ];
 
+// Rendered only when RevenueCat's offering actually contains $rc_lifetime,
+// so this can ship ahead of the store config without a dead button.
+const LIFETIME_PLAN = {
+  id: 'lifetime',
+  label: 'Lifetime',
+  price: '$99.99',
+  per: 'one time',
+  sub: 'One payment — yours forever',
+  badge: null,
+};
+
+const APP_STORE_URL = 'https://apps.apple.com/app/id6786001252';
+
 export default function PaywallScreen({ visible, onClose }) {
   const [selected, setSelected] = useState('annual');
   const [busy, setBusy] = useState(false);
+  // Localized priceStrings by plan id, from the live offering. Also gates the
+  // lifetime card: it only renders once RevenueCat serves a lifetime package.
+  const [livePrices, setLivePrices] = useState({});
   const { purchase, restore } = usePremium();
   const insets = useSafeAreaInsets();
+  const isWeb = Platform.OS === 'web';
+
+  useEffect(() => {
+    if (visible) fetchAvailablePlans().then(setLivePrices).catch(() => {});
+  }, [visible]);
+
+  const plans = 'lifetime' in livePrices ? [...PLANS, LIFETIME_PLAN] : PLANS;
+  const priceOf = p => livePrices[p.id] ?? p.price;
 
   async function handlePurchase() {
     setBusy(true);
@@ -82,7 +107,7 @@ export default function PaywallScreen({ visible, onClose }) {
     }
   }
 
-  const plan = PLANS.find(p => p.id === selected);
+  const plan = plans.find(p => p.id === selected) ?? PLANS[0];
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
@@ -124,7 +149,7 @@ export default function PaywallScreen({ visible, onClose }) {
 
           {/* Plans */}
           <View style={pw.plans}>
-            {PLANS.map(p => {
+            {plans.map(p => {
               const active = p.id === selected;
               return (
                 <TouchableOpacity
@@ -147,7 +172,7 @@ export default function PaywallScreen({ visible, onClose }) {
                       <Text style={pw.planSub}>{p.sub}</Text>
                     </View>
                     <View style={pw.planPriceWrap}>
-                      <Text style={pw.planPrice}>{p.price}</Text>
+                      <Text style={pw.planPrice}>{priceOf(p)}</Text>
                       <Text style={pw.planPer}>{p.per}</Text>
                     </View>
                   </View>
@@ -160,24 +185,33 @@ export default function PaywallScreen({ visible, onClose }) {
           <View style={pw.footer}>
             <TouchableOpacity
               style={[pw.cta, busy && pw.ctaDisabled]}
-              onPress={handlePurchase}
+              onPress={isWeb ? () => Linking.openURL(APP_STORE_URL) : handlePurchase}
               disabled={busy}
               activeOpacity={0.85}
             >
               {busy
                 ? <ActivityIndicator color="#FFF" />
                 : <Text style={pw.ctaText}>
-                    {plan.id === 'annual' ? 'Start 7-day free trial' : 'Subscribe now'}
+                    {isWeb ? 'Get the app to upgrade'
+                      : plan.id === 'annual' ? 'Start 7-day free trial'
+                      : plan.id === 'lifetime' ? 'Buy once — yours forever'
+                      : 'Subscribe now'}
                   </Text>}
             </TouchableOpacity>
             <Text style={pw.ctaSub}>
-              {plan.id === 'annual'
-                ? `7 days free, then ${plan.price}${plan.per} · Cancel anytime`
-                : `${plan.price}${plan.per} · Cancel anytime`}
+              {isWeb
+                ? 'Purchases are made in the iPhone app'
+                : plan.id === 'annual'
+                ? `7 days free, then ${priceOf(plan)}${plan.per} · Cancel anytime`
+                : plan.id === 'lifetime'
+                ? `${priceOf(plan)} once · No subscription, ever`
+                : `${priceOf(plan)}${plan.per} · Cancel anytime`}
             </Text>
-            <TouchableOpacity onPress={handleRestore} disabled={busy} hitSlop={8} activeOpacity={0.7}>
-              <Text style={pw.restore}>Restore purchases</Text>
-            </TouchableOpacity>
+            {!isWeb && (
+              <TouchableOpacity onPress={handleRestore} disabled={busy} hitSlop={8} activeOpacity={0.7}>
+                <Text style={pw.restore}>Restore purchases</Text>
+              </TouchableOpacity>
+            )}
             <View style={pw.legalRow}>
               <TouchableOpacity onPress={() => Linking.openURL(TERMS_URL)} hitSlop={8} activeOpacity={0.7}>
                 <Text style={pw.legalLink}>Terms of Use (EULA)</Text>
