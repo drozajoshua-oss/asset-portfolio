@@ -56,7 +56,11 @@ async function getComps(query, marketplace = 'EBAY_US') {
   if (!isConfigured() || !query) return null;
 
   const token = await getToken();
-  const url = `${SEARCH_URL}?q=${encodeURIComponent(query)}&limit=50&filter=${encodeURIComponent('buyingOptions:{FIXED_PRICE}')}`;
+  // Exclude reprints/replicas/lots — for high-value items (graded cards,
+  // rare coins) eBay otherwise floods results with cheap reproductions that
+  // wreck both the median and the sample listings we show.
+  const cleanQuery = `${query} -reprint -reproduction -replica -copy -"rp " -novelty -lot`;
+  const url = `${SEARCH_URL}?q=${encodeURIComponent(cleanQuery)}&limit=50&filter=${encodeURIComponent('buyingOptions:{FIXED_PRICE}')}`;
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
