@@ -546,6 +546,35 @@ export default function ScanScreen() {
                       <Text style={sc.btnSecondaryText}>Scan Again</Text>
                     </TouchableOpacity>
                   </View>
+
+                  {scanResult.marketComps?.listings?.length > 0 && (
+                    <View style={sc.listingsWrap}>
+                      <Text style={sc.listingsHeader}>LIVE ON EBAY NOW</Text>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={sc.listingsRow}
+                      >
+                        {scanResult.marketComps.listings.map((l, i) => (
+                          <TouchableOpacity
+                            key={i}
+                            style={sc.listingCard}
+                            activeOpacity={0.85}
+                            onPress={() =>
+                              WebBrowser.openBrowserAsync(l.url).catch(() =>
+                                Linking.openURL(l.url).catch(() => {})
+                              )
+                            }
+                          >
+                            <Image source={{ uri: l.image }} style={sc.listingImg} />
+                            <Text style={sc.listingPrice}>${l.price.toLocaleString()}</Text>
+                            <Text style={sc.listingTitle} numberOfLines={2}>{l.title}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                      <Text style={sc.listingsFoot}>Live eBay listings · tap to view</Text>
+                    </View>
+                  )}
                 </View>
               </View>
               <Text style={sc.disclaimer}>
@@ -811,6 +840,16 @@ const sc = StyleSheet.create({
   compsMeta:  { fontSize: 11, color: '#059669', marginTop: 1 },
   compsCta:     { flexDirection: 'row', alignItems: 'center', gap: 3 },
   compsCtaText: { fontSize: 12, fontWeight: '800', color: C.success },
+
+  // Live eBay listings strip (fills the space below the CTAs)
+  listingsWrap:   { marginTop: 2, marginBottom: 6 },
+  listingsHeader: { fontSize: 9, color: C.textMuted, letterSpacing: 1.8, fontWeight: '700', marginBottom: 8, marginLeft: 2 },
+  listingsRow:    { gap: 10, paddingRight: 8 },
+  listingCard:    { width: 104 },
+  listingImg:     { width: 104, height: 104, borderRadius: 10, backgroundColor: C.borderLight },
+  listingPrice:   { fontSize: 13, fontWeight: '800', color: C.text, marginTop: 6 },
+  listingTitle:   { fontSize: 10, color: C.textSub, marginTop: 2, lineHeight: 13 },
+  listingsFoot:   { fontSize: 10, color: C.textMuted, marginTop: 8, marginLeft: 2 },
 
   // Editable category
   catRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },

@@ -73,7 +73,22 @@ async function getComps(query, marketplace = 'EBAY_US') {
     .sort((a, b) => a - b);
 
   const currency = (items.find(i => i.price)?.price?.currency) || 'USD';
-  if (prices.length < 3) return { low: 0, median: 0, high: 0, count: prices.length, currency };
+  if (prices.length < 3) return { low: 0, median: 0, high: 0, count: prices.length, currency, listings: [] };
+
+  // A few real listings (with thumbnails) to show live on the result screen.
+  // eBay already returns these on every search — we simply surface them.
+  // Live-display only: the client never persists these (eBay data policy).
+  // itemWebUrl is EPN-wrappable later for affiliate revenue.
+  const listings = items
+    .filter(i => i.image?.imageUrl && i.itemWebUrl && i.price?.value > 0)
+    .slice(0, 8)
+    .map(i => ({
+      title: i.title,
+      price: Math.round(parseFloat(i.price.value)),
+      currency: i.price.currency || currency,
+      image: i.image.imageUrl,
+      url: i.itemWebUrl,
+    }));
 
   // Use the interquartile range (25th–75th percentile) so reprints, parts lots,
   // and mispriced listings on the extremes don't distort the "typical" range.
@@ -83,6 +98,7 @@ async function getComps(query, marketplace = 'EBAY_US') {
     high: Math.round(percentile(prices, 0.75)),
     count: prices.length,
     currency,
+    listings,
   };
 }
 
