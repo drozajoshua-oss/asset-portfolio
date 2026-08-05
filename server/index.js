@@ -411,7 +411,8 @@ app.get('/api/price', async (req, res) => {
     return res.status(503).json({ error: 'eBay pricing is not configured on the server yet.' });
   }
   try {
-    const comps = await ebay.getComps(q, req.query.marketplace || 'EBAY_US');
+    const est = parseFloat(req.query.est) || 0;
+    const comps = await ebay.getComps(q, req.query.marketplace || 'EBAY_US', est);
     res.json({ comps });
   } catch (err) {
     res.status(502).json({ error: err.message });

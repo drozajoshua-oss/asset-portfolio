@@ -52,7 +52,7 @@ function percentile(sorted, p) {
  * Returns { low, median, high, count, currency } for active eBay listings
  * matching `query`, or null if eBay isn't configured / no query.
  */
-async function getComps(query, marketplace = 'EBAY_US') {
+async function getComps(query, marketplace = 'EBAY_US', estimate = 0) {
   if (!isConfigured() || !query) return null;
 
   const token = await getToken();
@@ -70,7 +70,23 @@ async function getComps(query, marketplace = 'EBAY_US') {
   if (!res.ok) throw new Error(`eBay search error ${res.status}`);
 
   const data = await res.json();
-  const items = data.itemSummaries || [];
+  let items = data.itemSummaries || [];
+
+  // Anchor filter: when the AI gave an estimate, keep only listings priced
+  // within 0.3×–3× of it. This drops parts, accessories, and reprints (which
+  // sit far below a real item's value) from BOTH the median and the photos —
+  // negative keywords alone can't catch a "$95 watch case" or "$2 reprint".
+  // Applied only if it leaves enough listings, so a good estimate never
+  // starves the result of data.
+  if (estimate > 0) {
+    const lo = estimate * 0.3, hi = estimate * 3;
+    const banded = items.filter(i => {
+      const p = i.price && parseFloat(i.price.value);
+      return p >= lo && p <= hi;
+    });
+    if (banded.length >= 3) items = banded;
+  }
+
   const prices = items
     .map(i => i.price && parseFloat(i.price.value))
     .filter(v => v && v > 0)

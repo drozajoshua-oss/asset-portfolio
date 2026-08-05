@@ -549,7 +549,7 @@ export default function ScanScreen() {
 
                   {scanResult.marketComps?.listings?.length > 0 && (
                     <View style={sc.listingsWrap}>
-                      <Text style={sc.listingsHeader}>LIVE ON EBAY NOW</Text>
+                      <Text style={sc.listingsHeader}>SIMILAR ITEMS ON EBAY</Text>
                       <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
