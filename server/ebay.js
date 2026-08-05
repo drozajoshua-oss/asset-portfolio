@@ -76,15 +76,15 @@ async function getComps(query, marketplace = 'EBAY_US', estimate = 0) {
   // within 0.3×–3× of it. This drops parts, accessories, and reprints (which
   // sit far below a real item's value) from BOTH the median and the photos —
   // negative keywords alone can't catch a "$95 watch case" or "$2 reprint".
-  // Applied only if it leaves enough listings, so a good estimate never
-  // starves the result of data.
+  // Applied unconditionally: if too few clean listings survive, the caller's
+  // `count < 3` check suppresses the whole block — we'd rather show nothing
+  // than a gallery of mismatched junk next to the real estimate.
   if (estimate > 0) {
     const lo = estimate * 0.3, hi = estimate * 3;
-    const banded = items.filter(i => {
+    items = items.filter(i => {
       const p = i.price && parseFloat(i.price.value);
       return p >= lo && p <= hi;
     });
-    if (banded.length >= 3) items = banded;
   }
 
   const prices = items
