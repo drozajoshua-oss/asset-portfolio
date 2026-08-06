@@ -3,7 +3,7 @@ module.exports = {
     name: 'Trovault',
     slug: 'trovault',
     owner: 'jd379',
-    version: '1.0.1',
+    version: '1.0.2',
     extra: {
       eas: {
         projectId: '27553097-c177-4015-9883-b42204259c71',
