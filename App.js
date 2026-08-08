@@ -78,9 +78,11 @@ function MainTabs() {
           tabBarItemStyle: { borderRadius: 12 },
         })}
       >
-        <Tab.Screen name="Scan"       component={ScanScreen} />
-        <Tab.Screen name="Collection" component={CollectionScreen} />
+        {/* Dashboard sits first and is the landing tab — the portfolio is the
+            reason to open the app; scanning is the action you take from it. */}
         <Tab.Screen name="Dashboard"  component={DashboardScreen} />
+        <Tab.Screen name="Collection" component={CollectionScreen} />
+        <Tab.Screen name="Scan"       component={ScanScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );

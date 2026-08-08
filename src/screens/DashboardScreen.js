@@ -61,7 +61,6 @@ export default function DashboardScreen({ navigation }) {
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   // Category chips reflect only the categories actually in the collection (incl. custom).
   const dashCategories = [...new Set(coins.map(c => c.category).filter(Boolean))];
@@ -117,17 +116,14 @@ export default function DashboardScreen({ navigation }) {
           <Text style={ds.heroEyebrow}>TOTAL COLLECTION VALUE</Text>
           <Text style={ds.heroValue}>${totalValue.toLocaleString()}</Text>
 
-          <View style={ds.heroRow}>
-            {addedThisMonth > 0 ? (
+          {addedThisMonth > 0 && (
+            <View style={ds.heroRow}>
               <View style={ds.heroBadge}>
                 <Ionicons name="trending-up" size={12} color={C.success} />
                 <Text style={ds.heroBadgeText}>+${addedThisMonth.toLocaleString()} added this month</Text>
               </View>
-            ) : (
-              <View />
-            )}
-            <Text style={ds.heroDate}>{month}</Text>
-          </View>
+            </View>
+          )}
 
           {/* mini sub-stats */}
           <View style={ds.heroStats}>
@@ -337,7 +333,6 @@ const ds = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.13)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: R.pill,
   },
   heroBadgeText: { fontSize: 11, color: 'rgba(255,255,255,0.94)', fontWeight: '600' },
-  heroDate:      { fontSize: 11, color: 'rgba(255,255,255,0.50)', fontWeight: '500' },
 
   // Stats sit on a hairline rule rather than inside a tinted box — saves
   // height and reads calmer.
