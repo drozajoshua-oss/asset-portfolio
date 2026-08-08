@@ -7,7 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import { C, RARITY, CARD_SHADOW } from '../constants/colors';
+import { C, RARITY, CARD_SHADOW, R } from '../constants/colors';
 import { useCollection } from '../context/CollectionContext';
 import { CATEGORIES } from '../data/items';
 
@@ -58,52 +58,36 @@ function CoinCircle({ color, symbol, size }) {
   );
 }
 
-const PREMIUM = new Set(['Watches', 'Art', 'Vintage Cars', 'Jewellery']);
 
 function CoinCard({ coin, onOpen }) {
   const r = RARITY[coin.rarity] ?? RARITY.common;
-  const isPremium = PREMIUM.has(coin.category);
   return (
     <TouchableOpacity
       style={[col.card, { width: CARD_W }, CARD_SHADOW]}
       onPress={() => onOpen(coin)}
       activeOpacity={0.85}
     >
-      {/* Top stripe */}
-      <View style={[col.stripe, { backgroundColor: r.color }]} />
+      {/* Image is the hero. Rarity rides on it as a single pill, so the body
+          below carries only name / origin / value — no competing chrome. */}
+      <View style={col.photoWrap}>
+        {coin.photoUrls?.[0] ? (
+          <Image source={{ uri: coin.photoUrls[0] }} style={col.cardPhoto} />
+        ) : (
+          <View style={col.photoFallback}>
+            <CoinCircle color={coin.coinColor} symbol={coin.symbolChar} size={64} />
+          </View>
+        )}
+        <View style={[col.rarityPill, { backgroundColor: r.color }]}>
+          <Text style={col.rarityPillText}>{r.label}</Text>
+        </View>
+      </View>
 
       <View style={col.cardBody}>
-        <View style={col.coinWrap}>
-          {coin.photoUrls?.[0] ? (
-            <Image source={{ uri: coin.photoUrls[0] }} style={col.cardPhoto} />
-          ) : (
-            <CoinCircle color={coin.coinColor} symbol={coin.symbolChar} size={68} />
-          )}
-        </View>
-
         <Text style={col.coinName} numberOfLines={2}>{coin.name}</Text>
-        <Text style={col.coinMeta}>{coin.country} · {coin.year}</Text>
-
-        <View style={col.cardFooter}>
-          <Text style={col.coinValue}>${coin.value.toLocaleString()}</Text>
-          <View style={[col.metalTag, {
-            backgroundColor: isPremium ? '#FEF3C7' : '#F1F5F9',
-          }]}>
-            <Text style={[col.metalTagText, { color: isPremium ? '#D97706' : '#64748B' }]}>
-              {coin.category ?? 'Other'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={[col.rarityRow, { backgroundColor: r.bg }]}>
-          <View style={[col.rarityDot, { backgroundColor: r.color }]} />
-          <Text style={[col.rarityText, { color: r.color }]}>{r.label}</Text>
-        </View>
-
-        <View style={col.editBtn}>
-          <Ionicons name="information-circle-outline" size={11} color={C.textMuted} />
-          <Text style={col.editBtnText}>View details</Text>
-        </View>
+        <Text style={col.coinMeta}>
+          {[coin.country, coin.year].filter(Boolean).join(' · ')}
+        </Text>
+        <Text style={col.coinValue}>${coin.value.toLocaleString()}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -602,13 +586,16 @@ const col = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: PAD, paddingBottom: 10,
   },
+  // Quiet pills — the total is the important number, so it gets weight and
+  // near-black text rather than a loud amber chip.
   statPill: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: C.accentLight, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+    backgroundColor: C.surface, paddingHorizontal: 11, paddingVertical: 6, borderRadius: R.pill,
+    borderWidth: 1, borderColor: C.border,
   },
-  statPillText: { fontSize: 11, fontWeight: '700', color: C.accent },
-  statPillGold: { backgroundColor: '#FEF3C7' },
-  statPillGoldText: { fontSize: 12, fontWeight: '800', color: '#B45309' },
+  statPillText: { fontSize: 11.5, fontWeight: '500', color: C.textSub },
+  statPillGold: { backgroundColor: C.text, borderColor: C.text },
+  statPillGoldText: { fontSize: 12, fontWeight: '600', color: '#FFFFFF' },
 
   searchWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -645,34 +632,34 @@ const col = StyleSheet.create({
   scrollContent: { padding: PAD, paddingTop: 14 },
   row:           { flexDirection: 'row', gap: GAP, marginBottom: GAP },
 
+  // White surface + soft shadow. No border — never both.
   card: {
     backgroundColor: C.surface,
-    borderRadius: 16,
+    borderRadius: R.card,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: C.border,
   },
-  stripe: { height: 4 },
-  cardBody: { padding: 14 },
-  coinWrap: { alignItems: 'center', marginBottom: 12 },
-  cardPhoto: { width: 68, height: 68, borderRadius: 16, backgroundColor: '#EEF2FF' },
-  coinName: { fontSize: 13, fontWeight: '700', color: C.text, lineHeight: 18, textAlign: 'center' },
-  coinMeta: { fontSize: 11, color: C.textSub, textAlign: 'center', marginTop: 2 },
+  stripe: { height: 0 },
+  photoWrap: { width: '100%', height: 132, position: 'relative' },
+  cardPhoto: { width: '100%', height: '100%', backgroundColor: C.surfaceTint },
+  photoFallback: {
+    width: '100%', height: '100%', backgroundColor: C.surfaceTint,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  rarityPill: {
+    position: 'absolute', top: 10, left: 10,
+    paddingHorizontal: 9, paddingVertical: 4, borderRadius: R.pill,
+  },
+  rarityPillText: {
+    fontSize: 9, fontWeight: '700', letterSpacing: 0.6, color: '#FFFFFF',
+  },
 
-  cardFooter: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginTop: 10, marginBottom: 8,
+  cardBody: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 16 },
+  coinName: { fontSize: 13.5, fontWeight: '600', color: C.text, lineHeight: 18, minHeight: 36 },
+  coinMeta: { fontSize: 11.5, color: C.textMuted, marginTop: 6 },
+  coinValue: {
+    fontSize: 16, fontWeight: '600', color: C.text,
+    letterSpacing: -0.3, marginTop: 12,
   },
-  coinValue: { fontSize: 16, fontWeight: '800', color: C.accent },
-  metalTag: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, maxWidth: 90 },
-  metalTagText: { fontSize: 9, fontWeight: '800', letterSpacing: 1 },
-
-  rarityRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8,
-  },
-  rarityDot:  { width: 6, height: 6, borderRadius: 3 },
-  rarityText: { fontSize: 9, fontWeight: '800', letterSpacing: 1.2 },
 
   empty: { alignItems: 'center', paddingVertical: 80, gap: 10 },
   emptyIcon: {
@@ -688,11 +675,6 @@ const col = StyleSheet.create({
   ring2: { borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ring3: {                   alignItems: 'center', justifyContent: 'center' },
 
-  editBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 4, marginTop: 8, paddingVertical: 4,
-  },
-  editBtnText: { fontSize: 10, color: C.textMuted, fontWeight: '600' },
 
   // Bottom-sheet style modal
   sheetOverlay: {

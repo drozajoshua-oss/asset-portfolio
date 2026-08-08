@@ -1,60 +1,82 @@
-// Light SaaS palette — inspired by the FlowMail dashboard reference
+// Trovault design tokens.
+//
+// Quiet, spacious, premium. The brand blue is preserved but slightly
+// desaturated, colour is used sparingly, and rarity reads as a muted metal
+// scale rather than a rainbow. Greys are neutral (not blue-tinted) so the
+// blue is the only thing that feels coloured.
 export const C = {
   // ── Backgrounds ──────────────────────────────────
-  bg:          '#F4F6FC',   // page / screen background (very light blue-gray)
-  surface:     '#FFFFFF',   // card / panel background
-  surfaceTint: '#F0F3FE',   // light accent-tinted surface
+  bg:          '#F7F8FB',   // page background — near-white, barely cool
+  surface:     '#FFFFFF',   // card / panel
+  surfaceTint: '#F2F3F8',   // subtle inset
 
   // ── Borders & dividers ────────────────────────────
-  border:      '#E4E8F4',
-  borderLight: '#EEF1F8',
+  // Used EITHER as a hairline OR with a shadow — never both on one element.
+  border:      '#E8EAF0',
+  borderLight: '#F1F2F6',
 
-  // ── Primary accent — indigo/blue ─────────────────
-  accent:      '#5C6EF0',   // main CTA, active tabs, chart primary
-  accentDark:  '#4355C8',   // pressed state
-  accentLight: '#EEF0FE',   // badge bg, chip bg, icon halos
-  accentGlow:  'rgba(92,110,240,0.10)',
+  // ── Primary accent — desaturated indigo ──────────
+  accent:      '#5866CD',   // main CTA, active tab, chart primary
+  accentDark:  '#3F4CA0',   // pressed
+  accentLight: '#EEF0F9',   // chip / halo background
+  accentGlow:  'rgba(88,102,205,0.10)',
 
   // ── Text ─────────────────────────────────────────
-  text:        '#1A1F3D',   // primary — near-black navy
-  textSub:     '#64748B',   // secondary — slate
-  textMuted:   '#94A3B8',   // placeholder / caption
-  textOnAccent:'#FFFFFF',   // text on filled accent buttons
+  text:        '#15182B',   // primary
+  textSub:     '#6B7280',   // secondary — neutral slate
+  textMuted:   '#9CA3AF',   // captions, labels
+  textOnAccent:'#FFFFFF',
 
-  // ── Semantic ─────────────────────────────────────
-  success:     '#10B981',   // +trend, uncommon rarity, green bars
-  successLight:'#D1FAE5',
-  warning:     '#F59E0B',
-  warningLight:'#FEF3C7',
-  danger:      '#EF4444',
-  dangerLight: '#FEE2E2',
+  // ── Semantic — used sparingly ────────────────────
+  success:     '#0E9F6E',
+  successLight:'#E7F5EF',
+  warning:     '#C88A04',
+  warningLight:'#FBF3E0',
+  danger:      '#C96A6A',
+  dangerLight: '#F9EBEB',
 
-  // ── Rarity ───────────────────────────────────────
-  common:    '#64748B',
-  uncommon:  '#10B981',
-  rare:      '#8B5CF6',
-  legendary: '#F97316',
+  // ── Rarity — a muted metal scale ─────────────────
+  common:    '#8A8F9C',   // neutral grey
+  uncommon:  '#0E9F6E',   // emerald
+  rare:      '#5866CD',   // brand blue
+  epic:      '#7C6BB0',   // muted purple
+  legendary: '#A98029',   // muted gold
 
-  // ── Shadow helper ────────────────────────────────
-  shadow:    'rgba(92,110,240,0.10)',
-  shadowSm:  'rgba(0,0,0,0.06)',
+  // ── Elevation ────────────────────────────────────
+  shadow:    'rgba(20,24,45,0.05)',
+  shadowSm:  'rgba(20,24,45,0.04)',
 
-  // ── Chart palette ────────────────────────────────
-  chart: ['#5C6EF0','#10B981','#F59E0B','#EF4444','#8B5CF6','#F97316'],
+  // ── Chart palette — supports data, never dominates
+  chart: ['#5866CD','#0E9F6E','#A98029','#7C6BB0','#8A8F9C','#C88A04'],
 };
 
 export const RARITY = {
-  common:    { color: '#64748B', bg: '#F1F5F9', label: 'COMMON' },
-  uncommon:  { color: '#10B981', bg: '#D1FAE5', label: 'UNCOMMON' },
-  rare:      { color: '#8B5CF6', bg: '#EDE9FE', label: 'RARE' },
-  legendary: { color: '#F97316', bg: '#FFEDD5', label: 'LEGENDARY' },
+  common:    { color: '#8A8F9C', bg: '#F2F3F6', label: 'COMMON' },
+  uncommon:  { color: '#0E9F6E', bg: '#E7F5EF', label: 'UNCOMMON' },
+  rare:      { color: '#5866CD', bg: '#EEF0F9', label: 'RARE' },
+  epic:      { color: '#7C6BB0', bg: '#F0EDF7', label: 'EPIC' },
+  legendary: { color: '#A98029', bg: '#F7F0DF', label: 'LEGENDARY' },
 };
 
-// Card shadow — shared across all screens
+// ── Radius scale — hierarchy, not one value everywhere ──
+export const R = {
+  panel:  20,   // hero, sheets, large panels
+  card:   16,   // cards
+  image:  14,   // thumbnails inside cards
+  button: 12,   // buttons, inputs
+  pill:   999,  // tags, chips
+};
+
+// ── Spacing — 8pt system ──
+export const S = {
+  xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 40,
+};
+
+// Card shadow — soft and neutral. Pair with a white surface and NO border.
 export const CARD_SHADOW = {
-  shadowColor:   'rgba(92,110,240,0.12)',
-  shadowOffset:  { width: 0, height: 2 },
+  shadowColor:   'rgba(20,24,45,0.10)',
+  shadowOffset:  { width: 0, height: 4 },
+  shadowRadius:  16,
   shadowOpacity: 1,
-  shadowRadius:  12,
-  elevation:     3,
+  elevation:     2,
 };

@@ -63,7 +63,7 @@ function Corner({ pos }) {
 
 export default function ScanScreen() {
   const { addCoin } = useCollection();
-  const { isPremium, canScan, scansRemaining, recordScan } = usePremium();
+  const { isPremium, canScan, scansRemaining, recordScan, inWelcome } = usePremium();
   const [showPaywall, setShowPaywall] = useState(false);
   // idle | reviewing | scanning | done | error
   const [state, setState] = useState('idle');
@@ -84,8 +84,8 @@ export default function ScanScreen() {
     if (state === 'idle') {
       const loop = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.05, duration: 1100, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1,    duration: 1100, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1.03, duration: 1700, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1,    duration: 1700, useNativeDriver: true }),
         ])
       );
       loop.start();
@@ -325,7 +325,7 @@ export default function ScanScreen() {
                   ? C.accent
                   : state === 'error'
                   ? C.danger
-                  : 'rgba(92,110,240,0.55)',
+                  : 'rgba(88,102,205,0.55)',
               }]}>
                 {pickedImage && (
                   <Image
@@ -422,7 +422,7 @@ export default function ScanScreen() {
             ) : scansRemaining > 0 ? (
               <View style={sc.scanMeterRow}>
                 <Text style={sc.scanMeterText}>
-                  {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left this month
+                  {scansRemaining} free {scansRemaining === 1 ? 'scan' : 'scans'} left{inWelcome ? '' : ' this month'}
                 </Text>
                 <TouchableOpacity
                   style={sc.scanMeterBtn}
@@ -435,7 +435,7 @@ export default function ScanScreen() {
               </View>
             ) : (
               <TouchableOpacity onPress={() => setShowPaywall(true)} activeOpacity={0.7} hitSlop={8}>
-                <Text style={sc.scanMeterUpgrade}>Out of free scans this month — Go Premium →</Text>
+                <Text style={sc.scanMeterUpgrade}>Out of free scans{inWelcome ? '' : ' this month'} — Go Premium →</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -673,6 +673,11 @@ const sc = StyleSheet.create({
     backgroundColor: 'rgba(10,12,24,0.50)',
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
+    // Soft premium glow — the circle sits in light rather than on a flat field.
+    shadowColor: '#5866CD',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 34,
+    shadowOpacity: 0.42,
   },
   corner: {
     position: 'absolute',
@@ -685,7 +690,7 @@ const sc = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(10,12,24,0.55)',
   },
-  vfHint:     { fontSize: 10, color: 'rgba(255,255,255,0.40)', letterSpacing: 2.5, fontWeight: '700' },
+  vfHint:     { fontSize: 11, color: 'rgba(255,255,255,0.62)', letterSpacing: 2.4, fontWeight: '600' },
   vfScanning: { fontSize: 12, color: C.accent, letterSpacing: 1.5 },
   vfDone:     { fontSize: 11, fontWeight: '800', letterSpacing: 3 },
 
@@ -713,9 +718,9 @@ const sc = StyleSheet.create({
   },
   reviewBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(92,110,240,0.30)',
+    backgroundColor: 'rgba(88,102,205,0.30)',
     borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
-    borderWidth: 1, borderColor: 'rgba(92,110,240,0.55)',
+    borderWidth: 1, borderColor: 'rgba(88,102,205,0.55)',
   },
   reviewBadgeText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
   reviewTip: {
@@ -765,8 +770,8 @@ const sc = StyleSheet.create({
   btnAddAngle: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 15, borderRadius: 12,
-    backgroundColor: 'rgba(92,110,240,0.22)',
-    borderWidth: 1, borderColor: 'rgba(92,110,240,0.55)',
+    backgroundColor: 'rgba(88,102,205,0.22)',
+    borderWidth: 1, borderColor: 'rgba(88,102,205,0.55)',
   },
   btnAddAngleText: { fontSize: 15, fontWeight: '700', color: C.accent },
   btnIdentifyNow: {

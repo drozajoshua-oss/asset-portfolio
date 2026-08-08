@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { C, RARITY, CARD_SHADOW } from '../constants/colors';
+import { C, RARITY, CARD_SHADOW, R } from '../constants/colors';
 import { useCollection } from '../context/CollectionContext';
 import DonutChart from '../components/DonutChart';
 import PaywallScreen from './PaywallScreen';
 import SettingsScreen from './SettingsScreen';
 
-const GOLD = '#F5B301';
+const GOLD = '#C79A3C';   // muted gold — premium accent, not a warning colour
 
 // Small metric card used in the stats row
 function StatCard({ icon, iconBg, iconColor, label, value, sub, subColor }) {
@@ -173,7 +173,7 @@ export default function DashboardScreen({ navigation }) {
             <Text style={ds.premiumTitle}>Go Premium</Text>
             <Text style={ds.premiumSub}>Unlimited scans, live values & analytics</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={C.textMuted} />
+          <Text style={ds.premiumCta}>Upgrade</Text>
         </TouchableOpacity>
 
         {/* ── Category filter chips ── */}
@@ -283,36 +283,37 @@ export default function DashboardScreen({ navigation }) {
 
 const ds = StyleSheet.create({
   root:    { flex: 1, backgroundColor: C.bg },
-  safeArea:{ backgroundColor: C.surface, borderBottomWidth: 1, borderBottomColor: C.border },
+  // Header sits on the page background — no seam, no divider line.
+  safeArea:{ backgroundColor: C.bg },
   scroll:  { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 36 },
+  scrollContent: { padding: 20, paddingBottom: 40 },
 
   // Header
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 8, paddingBottom: 14,
+    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20,
   },
-  headerEyebrow: { fontSize: 10, color: C.textMuted, letterSpacing: 2.5, fontWeight: '700' },
-  headerTitle:   { fontSize: 24, fontWeight: '800', color: C.text, letterSpacing: -0.5, marginTop: 2 },
+  headerEyebrow: { fontSize: 10, color: C.textMuted, letterSpacing: 1.6, fontWeight: '600' },
+  headerTitle:   { fontSize: 26, fontWeight: '700', color: C.text, letterSpacing: -0.5, marginTop: 5 },
   notifBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: C.bg, borderWidth: 1, borderColor: C.border,
+    width: 38, height: 38, borderRadius: R.button,
+    backgroundColor: C.surface, borderWidth: 1, borderColor: C.border,
     alignItems: 'center', justifyContent: 'center',
   },
   // Hero card
   heroCard: {
     backgroundColor: C.accent,
-    borderRadius: 20,
-    padding: 22,
-    marginBottom: 14,
+    borderRadius: R.panel,
+    padding: 20,
+    marginBottom: 24,
     overflow: 'hidden',
   },
   heroScanBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: '#FFFFFF', borderRadius: 13,
-    paddingVertical: 13, marginTop: 16,
+    gap: 8, backgroundColor: '#FFFFFF', borderRadius: R.button,
+    paddingVertical: 13, marginTop: 18,
   },
-  heroScanText: { fontSize: 14.5, fontWeight: '800', color: C.accent },
+  heroScanText: { fontSize: 14.5, fontWeight: '700', color: C.accent },
   heroDeco: {
     position: 'absolute', top: -40, right: -40,
     width: 160, height: 160, borderRadius: 80,
@@ -324,116 +325,122 @@ const ds = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
   heroEyebrow: {
-    fontSize: 9, color: 'rgba(255,255,255,0.70)', letterSpacing: 2.5, fontWeight: '700', marginBottom: 8,
+    fontSize: 10, color: 'rgba(255,255,255,0.62)', letterSpacing: 1.6, fontWeight: '600', marginBottom: 8,
   },
+  // ~20% shorter than before: smaller figure, no tinted stats box, tighter rhythm.
   heroValue: {
-    fontSize: 40, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1.5, marginBottom: 12,
+    fontSize: 34, fontWeight: '700', color: '#FFFFFF', letterSpacing: -1.1, marginBottom: 10,
   },
-  heroRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 },
+  heroRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   heroBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.13)', paddingHorizontal: 11, paddingVertical: 5, borderRadius: R.pill,
   },
-  heroBadgeText: { fontSize: 11, color: '#FFFFFF', fontWeight: '700' },
-  heroDate:      { fontSize: 11, color: 'rgba(255,255,255,0.60)' },
+  heroBadgeText: { fontSize: 11, color: 'rgba(255,255,255,0.94)', fontWeight: '600' },
+  heroDate:      { fontSize: 11, color: 'rgba(255,255,255,0.50)', fontWeight: '500' },
 
+  // Stats sit on a hairline rule rather than inside a tinted box — saves
+  // height and reads calmer.
   heroStats: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 12, padding: 14,
+    marginTop: 20, paddingTop: 16,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.13)',
   },
-  heroStat:    { flex: 1, alignItems: 'center' },
-  heroStatDiv: { width: 1, backgroundColor: 'rgba(255,255,255,0.20)', marginVertical: 2 },
-  heroStatNum: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
-  heroStatLbl: { fontSize: 10, color: 'rgba(255,255,255,0.65)', marginTop: 3, letterSpacing: 0.3 },
+  heroStat:    { flex: 1, alignItems: 'flex-start' },
+  heroStatDiv: { width: 0 },
+  heroStatNum: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.3 },
+  heroStatLbl: { fontSize: 10, color: 'rgba(255,255,255,0.50)', marginTop: 3, letterSpacing: 0.4 },
 
   // Go Premium banner
+  // Premium reads as part of the same system — a quiet dark panel with a
+  // muted gold accent, rather than its own bright visual language.
   premiumBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: C.surface, borderRadius: 14,
-    borderWidth: 1, borderColor: GOLD + '55',
-    paddingHorizontal: 14, paddingVertical: 13, marginBottom: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 13,
+    backgroundColor: '#171A26', borderRadius: R.card,
+    paddingHorizontal: 18, paddingVertical: 16, marginBottom: 28,
   },
   premiumIcon: {
-    width: 38, height: 38, borderRadius: 11,
-    backgroundColor: '#FFF8E6', borderWidth: 1, borderColor: GOLD + '40',
+    width: 34, height: 34, borderRadius: 11,
+    backgroundColor: 'rgba(199,154,60,0.17)',
     alignItems: 'center', justifyContent: 'center',
   },
-  premiumTitle: { fontSize: 14, fontWeight: '800', color: C.text },
-  premiumSub:   { fontSize: 11.5, color: C.textSub, marginTop: 2 },
+  premiumTitle: { fontSize: 13.5, fontWeight: '600', color: '#FFFFFF' },
+  premiumSub:   { fontSize: 11.5, color: 'rgba(255,255,255,0.46)', marginTop: 2 },
+  premiumCta:   { fontSize: 12, fontWeight: '600', color: GOLD },
 
-  // Stats row
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 22 },
+  // Stats row — white surface + soft shadow, never surface + border too.
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 28 },
   statCard: {
     flex: 1,
     backgroundColor: C.surface,
-    borderRadius: 14,
-    padding: 13,
+    borderRadius: R.card,
+    padding: 16,
     alignItems: 'flex-start',
-    borderWidth: 1, borderColor: C.border,
+    ...CARD_SHADOW,
   },
   statIconBox: {
-    width: 34, height: 34, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+    width: 32, height: 32, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 10,
   },
-  statValue: { fontSize: 17, fontWeight: '800', color: C.text, letterSpacing: -0.3 },
-  statLabel: { fontSize: 9,  color: C.textMuted, letterSpacing: 1.5, fontWeight: '700', marginTop: 4 },
-  statSub:   { fontSize: 10, color: C.textMuted, marginTop: 2 },
+  statValue: { fontSize: 17, fontWeight: '700', color: C.text, letterSpacing: -0.3 },
+  statLabel: { fontSize: 9,  color: C.textMuted, letterSpacing: 1.4, fontWeight: '600', marginTop: 5 },
+  statSub:   { fontSize: 10, color: C.textMuted, marginTop: 3 },
 
   // Section
-  section:       { marginBottom: 20 },
+  section:       { marginBottom: 28 },
   sectionHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12,
   },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: C.text },
+  // Section headers recede — they label, they don't compete with the data.
+  sectionTitle: { fontSize: 12, fontWeight: '600', color: C.textMuted, letterSpacing: 1.2 },
   sectionLink:  { fontSize: 12, color: C.accent, fontWeight: '600' },
 
   // Generic card shell
   card: {
     backgroundColor: C.surface,
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1, borderColor: C.border,
+    borderRadius: R.card,
+    padding: 20,
+    ...CARD_SHADOW,
   },
 
   // Top 5
   topRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingVertical: 13,
   },
+  // Plain numeral instead of a bordered circle — less furniture.
   rankBadge: {
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: C.bg, borderWidth: 1, borderColor: C.border,
-    alignItems: 'center', justifyContent: 'center',
+    width: 24,
+    alignItems: 'flex-start', justifyContent: 'center',
   },
-  rankBadge1: { backgroundColor: C.accentLight, borderColor: C.accent + '60' },
-  rankText:   { fontSize: 12, fontWeight: '700', color: C.textSub },
-  rankText1:  { color: C.accent },
+  rankBadge1: {},
+  rankText:   { fontSize: 11, fontWeight: '600', color: C.textMuted },
+  rankText1:  { color: C.textMuted },
 
   topMid: { flex: 1 },
-  topTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 },
-  topName: { flex: 1, fontSize: 13, fontWeight: '700', color: C.text },
-  topRarityPill: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 },
-  topRarityPillText: { fontSize: 8, fontWeight: '800', letterSpacing: 1 },
+  topTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  topName: { flex: 1, fontSize: 13.5, fontWeight: '600', color: C.text },
+  topRarityPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: R.pill },
+  topRarityPillText: { fontSize: 8, fontWeight: '700', letterSpacing: 0.8 },
 
-  barTrack: { height: 3, backgroundColor: C.border, borderRadius: 2, marginBottom: 5 },
+  barTrack: { height: 3, backgroundColor: C.borderLight, borderRadius: 2, marginTop: 8 },
   barFill:  { height: 3, borderRadius: 2 },
 
-  topMeta:    { fontSize: 11, color: C.textSub },
-  topVal:     { fontSize: 14, fontWeight: '800', color: C.text },
+  topMeta:    { fontSize: 11.5, color: C.textMuted },
+  topVal:     { fontSize: 14, fontWeight: '600', color: C.text },
   topDivider: { height: 1, backgroundColor: C.borderLight },
 
-  // Category filter chips
-  filterBar:     { maxHeight: 48, marginBottom: 16 },
+  // Category filter chips — selected state is solid, the rest are quiet.
+  filterBar:     { maxHeight: 48, marginBottom: 24 },
   filterContent: { paddingBottom: 4, gap: 8, alignItems: 'center' },
   chip: {
     paddingHorizontal: 14, paddingVertical: 7,
-    borderRadius: 20, backgroundColor: C.bg,
+    borderRadius: R.pill, backgroundColor: C.surface,
     borderWidth: 1, borderColor: C.border,
   },
-  chipActive:     { backgroundColor: C.accentLight, borderColor: C.accent + '60' },
-  chipText:       { fontSize: 12, color: C.textMuted, fontWeight: '600' },
-  chipTextActive: { color: C.accent },
+  chipActive:     { backgroundColor: C.accent, borderColor: C.accent },
+  chipText:       { fontSize: 12, color: C.textSub, fontWeight: '500' },
+  chipTextActive: { color: '#FFFFFF', fontWeight: '600' },
 
   // Summary table
   summaryRow: {
