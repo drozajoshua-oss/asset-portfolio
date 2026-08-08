@@ -393,20 +393,10 @@
 </footer>
 
 <script>
-  // ── Ticker: live eBay medians from our API, illustrative fallback if it's
-  //    unreachable. `change` is % vs the previous daily snapshot (null on day 1).
-  const FALLBACK_TICKS = [
-    ['Air Jordan 1 Chicago', 1850, 2.3],
-    ['Rolex Submariner 5513', 18200, 1.4],
-    ['1921 Morgan Dollar MS-63', 130, -0.8],
-    ['Charizard Base Set PSA 8', 1320, 5.2],
-    ['Omega Speedmaster 3570', 4950, 0.6],
-    ['Amazing Spider-Man #300', 980, 3.1],
-    ['1986 Fleer Jordan PSA 7', 9400, -1.2],
-    ['Hermès Birkin 30', 14750, 0.9],
-    ['Penny Black 1840', 2100, 1.8],
-    ['LEGO UCS Falcon 75192', 1060, 2.7],
-  ];
+  // ── Ticker: live eBay medians from our API only. There is deliberately NO
+  //    hardcoded fallback — if the API is unreachable we hide the ticker
+  //    rather than display invented prices. `change` is % vs the previous
+  //    daily snapshot and stays null until price_history has 2+ days.
   function renderTicker(rows) {
     const html = rows.map(([n, p, c, u]) => {
       const href = u || `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(n)}`;
@@ -418,27 +408,33 @@
     }).join('');
     document.getElementById('ticker').innerHTML = html + html; // duplicated for seamless loop
   }
-  renderTicker(FALLBACK_TICKS);
+  const tickerWrap = document.querySelector('.ticker-wrap');
+  if (tickerWrap) tickerWrap.style.display = 'none';   // shown only on real data
   fetch('https://asset-portfolio-production.up.railway.app/api/ticker')
     .then(r => (r.ok ? r.json() : null))
     .then(d => {
-      if (d?.items?.length >= 5) renderTicker(d.items.map(i => [i.label, i.price, i.change, i.url]));
+      if (d?.items?.length >= 5) {
+        renderTicker(d.items.map(i => [i.label, i.price, i.change, i.url]));
+        if (tickerWrap) tickerWrap.style.display = '';
+      }
     })
     .catch(() => {});
 
-  // ── Market category cards with sparklines (icon halos use the app's *Light tints) ──
+  // ── Market category cards ──
+  // NOTE: percentage movements and sparklines were REMOVED 2026-08-07 — they
+  // were hardcoded placeholders, not real market data. Nothing here may show a
+  // price or a trend until it comes from a real source (see price_history).
   const MARKETS = [
-    ['🪙', 'Coins', 'Morgans, Sovereigns, error coins', +1.2, '#FEF3C7'],
-    ['⌚', 'Watches', 'Rolex, Omega, Seiko, vintage', +0.8, '#EEF0FE'],
-    ['👟', 'Sneakers', 'Jordans, Dunks, collabs', +2.3, '#D1FAE5'],
-    ['🃏', 'Trading Cards', 'Pokémon, sports, TCG', +4.1, '#FEE2E2'],
-    ['📚', 'Comics', 'Key issues, first appearances', +1.6, '#EDE9FE'],
-    ['🖼️', 'Art', 'Prints, paintings, sculpture', +0.4, '#FEF3C7'],
-    ['💍', 'Jewellery', 'Gold, gemstones, designer', +0.9, '#D1FAE5'],
-    ['📮', 'Stamps', 'Classics, rarities, covers', -0.3, '#FEE2E2'],
+    ['🪙', 'Coins', 'Morgans, Sovereigns, error coins', 'coins', '#FEF3C7'],
+    ['⌚', 'Watches', 'Rolex, Omega, Seiko, vintage', 'watches', '#EEF0FE'],
+    ['👟', 'Sneakers', 'Jordans, Dunks, collabs', 'sneakers', '#D1FAE5'],
+    ['🃏', 'Trading Cards', 'Pokémon, sports, TCG', 'cards', '#FEE2E2'],
+    ['📚', 'Comics', 'Key issues, first appearances', 'comics', '#EDE9FE'],
+    ['🖼️', 'Art', 'Prints, paintings, sculpture', 'art', '#FEF3C7'],
+    ['💍', 'Jewellery', 'Gold, gemstones, designer', 'jewellery', '#D1FAE5'],
+    ['📮', 'Stamps', 'Classics, rarities, covers', 'stamps', '#FEE2E2'],
   ];
-  // deterministic pseudo-random walk per card so sparklines differ but stay stable
-  function spark(seed, up) {
+  function spark_unused(seed, up) {
     let x = seed, pts = [];
     for (let i = 0; i < 12; i++) { x = (x * 9301 + 49297) % 233280; pts.push(x / 233280); }
     const path = pts.map((v, i) => {
@@ -449,11 +445,89 @@
     const color = up ? '#10B981' : '#EF4444';
     return `<svg viewBox="0 0 100 34" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>`;
   }
-  document.getElementById('markets').innerHTML = MARKETS.map(([ico, name, ex, chg, bg], i) =>
-    `<div class="mkt"><div class="mkt-top"><div class="mkt-ico" style="background:${bg}">${ico}</div>` +
-    `<div class="mkt-chg ${chg >= 0 ? 'up' : 'down'}">${chg >= 0 ? '▲' : '▼'} ${Math.abs(chg).toFixed(1)}%</div></div>` +
-    `<div class="mkt-name">${name}</div><div class="mkt-ex">${ex}</div>${spark(i * 7919 + 13, chg >= 0)}</div>`
+  // Per-category detail shown when a card is tapped. Facts only — no prices,
+  // no invented trends. Historical yearly values get slotted in here once we
+  // have a sourced dataset.
+  const MKT_DETAIL = {
+    coins: ['What Trovault identifies', 'Country, denomination, year, mint mark, errors and varieties, plus grade if slabbed (PCGS, NGC, ANACS).',
+      ['Mintage and survival rate — how many were struck, and how many still exist', 'Grade — a single point on the Sheldon scale can multiply value', 'Errors and varieties — doubled dies, off-centre strikes, wrong planchets']],
+    watches: ['What Trovault identifies', 'Brand, model, reference number, movement era and case material, read from the dial and case back.',
+      ['Reference and production year — small changes create big premiums', 'Originality — service dials and replaced bezels reduce value sharply', 'Box and papers — a full set commonly outprices the watch alone']],
+    sneakers: ['What Trovault identifies', 'Silhouette, colourway, release year and collaboration, from the shoe and box label.',
+      ['Condition — deadstock versus worn is the single largest factor', 'Size — the middle of the run is common, extremes can be scarcer', 'Release type — general releases behave very differently to limited collabs']],
+    cards: ['What Trovault identifies', 'Player or character, set, year, card number, parallel or insert, and grading company and grade if slabbed.',
+      ['Grade — PSA/BGS grade drives most of the price on modern cards', 'Population — how many exist at that grade', 'Print run and parallel — numbered and short-print cards sit well above base']],
+    comics: ['What Trovault identifies', 'Title, issue number, publisher, cover date and printing, plus CGC grade if slabbed.',
+      ['Key issues — first appearances and origin stories carry the premium', 'Grade and page quality — white pages beat tan at the same grade', 'Printing — first prints separate sharply from later reprints']],
+    art: ['What Trovault identifies', 'Artist signature, title, medium, edition number and year where visible on the work.',
+      ['Attribution — a confirmed artist is the whole ballgame', 'Edition size — originals over limited prints over open editions', 'Provenance and condition — documented history supports value']],
+    jewellery: ['What Trovault identifies', 'Maker marks, metal hallmarks, gemstone type and designer signatures.',
+      ['Metal content and weight — a real floor under the piece', 'Stones — carat, cut, clarity and colour, certified where possible', 'Maker — signed designer pieces outprice unsigned equivalents']],
+    stamps: ['What Trovault identifies', 'Country, denomination, year, series and catalogue reference where legible.',
+      ['Condition and centring — margins and gum matter enormously', 'Cancellation — used versus mint changes the market entirely', 'Errors — inverts, missing colours and perforation faults']],
+  };
+  document.getElementById('markets').innerHTML = MARKETS.map(([ico, name, ex, slug, bg]) =>
+    `<button class="mkt" data-slug="${slug}" aria-label="${name} details">` +
+    `<div class="mkt-top"><div class="mkt-ico" style="background:${bg}">${ico}</div>` +
+    `<div class="mkt-more">View →</div></div>` +
+    `<div class="mkt-name">${name}</div><div class="mkt-ex">${ex}</div></button>`
   ).join('');
+
+  (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+      .mkt{cursor:pointer;text-align:left;font:inherit;width:100%;transition:transform .16s ease, box-shadow .16s ease}
+      .mkt:hover{transform:translateY(-2px)}
+      .mkt-more{font-size:12px;font-weight:700;color:var(--accent);opacity:.75}
+      .mdl{position:fixed;inset:0;background:rgba(12,16,32,.55);backdrop-filter:blur(3px);
+        display:flex;align-items:center;justify-content:center;padding:20px;z-index:99;opacity:0;
+        pointer-events:none;transition:opacity .18s ease}
+      .mdl.on{opacity:1;pointer-events:auto}
+      .mdl-box{background:#fff;border-radius:20px;max-width:520px;width:100%;padding:28px;
+        max-height:82vh;overflow:auto;transform:translateY(8px);transition:transform .18s ease}
+      .mdl.on .mdl-box{transform:none}
+      .mdl-ico{width:52px;height:52px;border-radius:15px;display:flex;align-items:center;
+        justify-content:center;font-size:25px;margin-bottom:16px}
+      .mdl-h{font-size:22px;font-weight:800;color:#101733;letter-spacing:-.3px}
+      .mdl-lead{font-size:14.5px;line-height:1.6;color:#4a556b;margin:14px 0 22px}
+      .mdl-sub{font-size:11px;letter-spacing:1.4px;font-weight:700;color:#8a94b3;margin-bottom:12px}
+      .mdl-li{display:flex;gap:11px;font-size:14px;line-height:1.55;color:#3c4563;margin-bottom:11px}
+      .mdl-li b{color:#101733;font-weight:600}
+      .mdl-x{margin-top:24px;width:100%;padding:13px;border:0;border-radius:12px;background:#101733;
+        color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+      .mdl-note{font-size:12px;color:#8a94b3;margin-top:16px;line-height:1.5}`;
+    document.head.appendChild(st);
+
+    const mdl = document.createElement('div');
+    mdl.className = 'mdl';
+    mdl.innerHTML = '<div class="mdl-box"></div>';
+    document.body.appendChild(mdl);
+    const box = mdl.querySelector('.mdl-box');
+    const close = () => mdl.classList.remove('on');
+    mdl.addEventListener('click', e => { if (e.target === mdl) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+    document.getElementById('markets').addEventListener('click', e => {
+      const btn = e.target.closest('.mkt');
+      if (!btn) return;
+      const slug = btn.dataset.slug;
+      const m = MARKETS.find(x => x[3] === slug);
+      const d = MKT_DETAIL[slug];
+      if (!m || !d) return;
+      box.innerHTML =
+        `<div class="mdl-ico" style="background:${m[4]}">${m[0]}</div>` +
+        `<div class="mdl-h">${m[1]}</div>` +
+        `<div class="mdl-lead">${d[1]}</div>` +
+        `<div class="mdl-sub">WHAT DRIVES VALUE</div>` +
+        d[2].map(t => { const i = t.indexOf('—');
+          return `<div class="mdl-li"><span>•</span><span><b>${t.slice(0, i).trim()}</b> ${t.slice(i)}</span></div>`;
+        }).join('') +
+        `<div class="mdl-note">Trovault prices ${m[1].toLowerCase()} against live marketplace listings at the moment you scan.</div>` +
+        `<button class="mdl-x">Close</button>`;
+      box.querySelector('.mdl-x').onclick = close;
+      mdl.classList.add('on');
+    });
+  })();
 
   // ── Waitlist submit (Railway endpoint; graceful if unreachable) ──
   const API = 'https://asset-portfolio-production.up.railway.app/api/subscribe';
