@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Animated,
+  View, Text, StyleSheet, TouchableOpacity, Animated, Easing,
   ScrollView, Dimensions, Image, Alert, Linking, Modal, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -76,20 +76,52 @@ export default function ScanScreen() {
   const [showCat, setShowCat] = useState(false);
   const [customCat, setCustomCat] = useState('');
 
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;   // circle breath
+  const glowAnim  = useRef(new Animated.Value(0.5)).current; // halo brightness
+  const sweepAnim = useRef(new Animated.Value(0)).current;   // rotating arc
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(80)).current;
 
+  // Rotation is driven off a 0→1 value so the loop can stay on the native driver.
+  const sweepSpin = sweepAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   useEffect(() => {
     if (state === 'idle') {
-      const loop = Animated.loop(
+      // Three quiet layers, all on the native driver:
+      //  1. the circle breathes,
+      //  2. the halo brightens and dims with it,
+      //  3. a faint arc sweeps the rim so the scanner reads as "listening".
+      const breathe = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.03, duration: 1700, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1,    duration: 1700, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1.045, duration: 1700, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1,     duration: 1700, useNativeDriver: true }),
         ])
       );
-      loop.start();
-      return () => loop.stop();
+      const glow = Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, { toValue: 1,   duration: 1700, useNativeDriver: true }),
+          Animated.timing(glowAnim, { toValue: 0.4, duration: 1700, useNativeDriver: true }),
+        ])
+      );
+      // Animated.loop leaves the rotation parked at 360deg after one pass on
+      // some drivers, so drive it with a self-restarting timing instead.
+      let spinning = true;
+      const spin = () => {
+        if (!spinning) return;
+        sweepAnim.setValue(0);
+        Animated.timing(sweepAnim, {
+          toValue: 1, duration: 4200, easing: Easing.linear, useNativeDriver: true,
+        }).start(({ finished }) => { if (finished) spin(); });
+      };
+      breathe.start(); glow.start(); spin();
+      return () => {
+        spinning = false;
+        breathe.stop(); glow.stop();
+        sweepAnim.stopAnimation(); sweepAnim.setValue(0);
+      };
     }
     if (state === 'done') {
       fadeAnim.setValue(0);
@@ -318,6 +350,31 @@ export default function ScanScreen() {
               disabled={state !== 'idle'}
               activeOpacity={0.85}
             >
+              {/* Halo — sibling of the circle so it isn't clipped by the
+                  circle's overflow:hidden. Opacity animates (native driver
+                  can't drive shadowOpacity directly). */}
+              {state === 'idle' && (
+                <Animated.View
+                  pointerEvents="none"
+                  style={[sc.vfGlow, {
+                    width: circleSize + 56, height: circleSize + 56,
+                    borderRadius: (circleSize + 56) / 2,
+                    top: -28, left: -28,
+                    opacity: glowAnim,
+                  }]}
+                />
+              )}
+              {/* Sweep — a ring whose top edge alone is tinted, rotating. */}
+              {state === 'idle' && (
+                <Animated.View
+                  pointerEvents="none"
+                  style={[sc.vfSweep, {
+                    width: circleSize, height: circleSize,
+                    borderRadius: circleSize / 2,
+                    transform: [{ rotate: sweepSpin }],
+                  }]}
+                />
+              )}
               <Animated.View style={[sc.vfCircle, {
                 width: circleSize, height: circleSize, borderRadius: circleSize / 2,
                 transform: state === 'idle' ? [{ scale: pulseAnim }] : [],
@@ -668,6 +725,22 @@ const sc = StyleSheet.create({
 
   // ── Circular viewfinder ──────────────────────────────────────────────────
   vfOuter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // Halo behind the viewfinder — brightens and dims with the breath.
+  vfGlow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(88,102,205,0.13)',
+    shadowColor: '#5866CD',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 44,
+    shadowOpacity: 0.75,
+  },
+  // Only the top edge is tinted, so rotating it reads as a sweep.
+  vfSweep: {
+    position: 'absolute',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    borderTopColor: 'rgba(140,158,255,0.85)',
+  },
   vfCircle: {
     borderWidth: 1.5,
     backgroundColor: 'rgba(10,12,24,0.50)',
