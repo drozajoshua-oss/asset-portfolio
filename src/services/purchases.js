@@ -24,6 +24,11 @@ export const REVENUECAT_ENABLED = true;
 // *public* app-specific keys — safe to ship in the client; not the secret key).
 export const RC_API_KEYS = {
   ios: 'appl_TJXkEAPWeqZBIVILbHmJSyNvVva',
+  // ⚠️ PLACEHOLDER — NOT A REAL KEY. Android is not shipped (decided
+  // 2026-08-09: no Android hardware to test on, and Play requires 12
+  // testers for 14 days first). Before ANY Android release: create the
+  // Play Billing products, add the Play app in RevenueCat, and paste the
+  // real goog_ key here — otherwise purchases fail at startup.
   android: 'goog_XXXXXXXXXXXXXXXXXXXXXXXX',
 };
 
