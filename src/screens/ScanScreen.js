@@ -364,14 +364,17 @@ export default function ScanScreen() {
                   }]}
                 />
               )}
-              {/* Sweep — a ring whose top edge alone is tinted, rotating. */}
+              {/* Sweep — a ring whose top edge alone is tinted, rotating.
+                  It carries the SAME scale as the circle: without it the rim
+                  breathes while the arc stays put, and the line appears to
+                  drift off the circle and back. */}
               {state === 'idle' && (
                 <Animated.View
                   pointerEvents="none"
                   style={[sc.vfSweep, {
                     width: circleSize, height: circleSize,
                     borderRadius: circleSize / 2,
-                    transform: [{ rotate: sweepSpin }],
+                    transform: [{ rotate: sweepSpin }, { scale: pulseAnim }],
                   }]}
                 />
               )}
