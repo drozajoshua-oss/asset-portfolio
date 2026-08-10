@@ -9,6 +9,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as ImagePicker from 'expo-image-picker';
 import { C, RARITY, CARD_SHADOW } from '../constants/colors';
 import { identifyAsset } from '../services/gemini';
+import { maybeAskForReview } from '../services/review';
 import { useCollection } from '../context/CollectionContext';
 import { usePremium } from '../context/PremiumContext';
 import { CATEGORIES } from '../data/items';
@@ -143,6 +144,9 @@ export default function ScanScreen() {
       setScanResult(result);
       setCategory(result.category ?? 'Other');
       setState('done');
+      // Ask for a rating at the moment of delight — a real valuation just
+      // landed. Fire-and-forget; it self-guards and never blocks the result.
+      maybeAskForReview(result);
     } catch (err) {
       setErrorMsg(err.message || 'Could not identify item. Please try again.');
       setState('error');
